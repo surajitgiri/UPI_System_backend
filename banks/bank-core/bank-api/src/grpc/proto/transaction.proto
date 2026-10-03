@@ -1,0 +1,212 @@
+syntax = "proto3";
+
+package transaction;
+
+
+// Transaction Service
+
+service TransactionService {
+
+    // Create transaction
+    rpc CreateTransaction(CreateTransactionRequest)
+        returns (TransactionResponse);
+
+    // Get all transactions
+    rpc GetTransactions(GetTransactionsRequest)
+        returns (TransactionsResponse);
+
+    // Get transaction by ID
+    rpc GetTransactionById(GetTransactionByIdRequest)
+        returns (TransactionResponse);
+
+    // Get transaction by reference
+    rpc GetTransactionByReference(
+        GetTransactionByReferenceRequest
+    ) returns (TransactionResponse);
+
+    // Get transactions by account
+    rpc GetTransactionsByAccountId(
+        GetTransactionsByAccountIdRequest
+    ) returns (TransactionsResponse);
+
+    // Get transactions by status
+    rpc GetTransactionsByStatus(
+        GetTransactionsByStatusRequest
+    ) returns (TransactionsResponse);
+
+    // Get transactions by type
+    rpc GetTransactionsByType(
+        GetTransactionsByTypeRequest
+    ) returns (TransactionsResponse);
+
+    // Count transactions
+    rpc CountTransactions(CountTransactionsRequest)
+        returns (CountResponse);
+
+    // Process transfer
+    rpc ProcessTransfer(ProcessTransactionRequest)
+        returns (TransactionResponse);
+
+    // Process deposit
+    rpc ProcessDeposit(ProcessTransactionRequest)
+        returns (TransactionResponse);
+
+    // Process withdrawal
+    rpc ProcessWithdrawal(ProcessTransactionRequest)
+        returns (TransactionResponse);
+
+    // Reverse transaction
+    rpc ReverseTransaction(ProcessTransactionRequest)
+        returns (TransactionResponse);
+
+    // Mark transaction as failed
+    rpc MarkTransactionFailed(
+        MarkTransactionFailedRequest
+    ) returns (TransactionResponse);
+}
+
+//  Transaction
+
+message Transaction {
+
+    string id = 1;
+
+    string reference = 2;
+
+    string type = 3;
+
+    string status = 4;
+
+    string sourceAccountId = 5;
+
+    string destinationAccountId = 6;
+
+    string amount = 7;
+
+    string currency = 8;
+
+    string description = 9;
+
+    string failureReason = 10;
+
+    string createdAt = 11;
+
+    string updatedAt = 12;
+}
+
+
+// Create Transaction
+
+message CreateTransactionRequest {
+
+    string type = 1;
+
+    string sourceAccountId = 2;
+
+    string destinationAccountId = 3;
+
+    string amount = 4;
+
+    string currency = 5;
+
+    string description = 6;
+}
+
+//  Get Transactions
+
+message GetTransactionsRequest {
+}
+
+// Get Transaction By ID
+
+message GetTransactionByIdRequest {
+
+    string id = 1;
+}
+
+// Get Transaction By Reference
+
+message GetTransactionByReferenceRequest {
+
+    string reference = 1;
+}
+
+
+// Get Transactions By Account
+
+message GetTransactionsByAccountIdRequest {
+
+    string accountId = 1;
+}
+
+// Get Transactions By Status
+
+message GetTransactionsByStatusRequest {
+
+    string status = 1;
+}
+
+// Get Transactions By Type
+
+message GetTransactionsByTypeRequest {
+
+    string type = 1;
+}
+
+// Count Transactions
+
+message CountTransactionsRequest {
+
+    string status = 1;
+
+    string type = 2;
+}
+
+// Process Transaction
+
+message ProcessTransactionRequest {
+
+    string id = 1;
+}
+
+// Mark Transaction Failed
+
+message MarkTransactionFailedRequest {
+
+    string id = 1;
+
+    string failureReason = 2;
+}
+
+// Transaction Response
+
+message TransactionResponse {
+
+    bool success = 1;
+
+    string message = 2;
+
+    Transaction data = 3;
+}
+
+// Transactions Response
+
+message TransactionsResponse {
+
+    bool success = 1;
+
+    string message = 2;
+
+    repeated Transaction data = 3;
+}
+
+// Count Response
+
+message CountResponse {
+
+    bool success = 1;
+
+    string message = 2;
+
+    int32 count = 3;
+}

@@ -1,0 +1,167 @@
+syntax = "proto3";
+
+package account;
+
+option java_multiple_files = true;
+
+// Account Service
+
+service AccountService {
+
+    // Create account
+    rpc CreateAccount(CreateAccountRequest) returns (AccountResponse);
+
+    // Get all Accounts
+    rpc GetAccounts(GetAccountsRequest) returns (AccountsResponse);
+
+    // Get account by ID
+    rpc GetAccountById(GetAccountByIdRequest) returns (AccountResponse);
+
+    // Get account by account number
+    rpc GetAccountByAccountNumber(GetAccountByAccountNumberRequest) returns (AccountResponse);
+
+    // Update account
+    rpc UpdateAccount(UpdateAccountRequest) returns (AccountResponse);
+
+    // Freeze account
+    rpc FreezeAccount(AccountIdRequest) returns (AccountResponse);
+
+    // Active account
+    rpc ActivateAccount(AccountIdRequest) returns (AccountResponse);
+
+    // Close account
+    rpc CloseAccount(AccountIdRequest) returns (AccountResponse);
+
+    // Delete account
+    rpc DeleteAccount(AccountIdRequest) returns (DeleteAccountResponse);
+
+
+}
+
+// Account
+
+message Account {
+    string id = 1;
+
+    string accountNumber = 2;
+
+    string customerId = 3;
+
+    string branchId = 4;
+
+    string accountType = 5;
+
+    string status = 6;
+
+    string currency = 7;
+
+    string availableBalance = 8;
+
+    string holdBalance = 9;
+
+    string minimumBalance = 10;
+
+    string openingDate = 11;
+
+    string createdAt = 12;
+
+    string updatedAt = 13;
+}
+
+// Create Account
+message CreateAccountRequest {
+
+    string accountNumber = 1;
+
+    string customerId = 2;
+
+    string branchId = 3;
+
+    string accountType = 4;
+
+    string currency = 5;
+
+    string availableBalance = 6;
+
+    string holdBalance = 7;
+
+    string minimumBalance = 8;
+}
+
+// Get All Accounts
+message GetAccountsRequest {
+}
+
+// Get Account By ID
+
+message GetAccountByIdRequest {
+    string id = 1;
+}
+
+// Get Account By Account Number
+
+message GetAccountByAccountNumberRequest {
+
+    string accountNumber = 1;
+}
+
+// Update Account
+
+message UpdateAccountRequest {
+
+    string id = 1;
+
+    string accountNumber = 2;
+
+    string customerId = 3;
+
+    string branchId = 4;
+
+    string accountType = 5;
+
+    string status = 6;
+
+    string currency = 7;
+
+    string availableBalance = 8;
+
+    string holdBalance = 9;
+
+    string minimumBalance = 10;
+}
+
+// Account ID Request
+
+message AccountIdRequest {
+    string id = 1;
+}
+
+// Account Response
+
+message AccountResponse {
+    bool success = 1;
+
+    string message = 2;
+
+    Account data = 3;
+}
+
+ // Accounts Response
+
+message AccountsResponse {
+
+    bool success = 1;
+
+    string message = 2;
+
+    repeated Account data = 3;
+}
+
+// Delete Account Response
+
+message DeleteAccountResponse {
+
+    bool success = 1;
+
+    string message = 2;
+}

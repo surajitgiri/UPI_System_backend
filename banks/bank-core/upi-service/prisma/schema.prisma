@@ -1,0 +1,241 @@
+// upi-service/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum VpaStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum UpiTransactionStatus {
+  INITIATED
+  PENDING
+  SUCCESS
+  FAILED
+  REVERSED
+  EXPIRED
+  DECLINED
+}
+
+enum UpiTransactionType {
+  PAY           // Push — sender initiates
+  COLLECT       // Pull — receiver requests money from sender
+  REFUND
+}
+
+enum CollectRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum MandateStatus {
+  CREATED
+  ACTIVE
+  PAUSED
+  REVOKED
+  EXPIRED
+}
+
+enum MandateFrequency {
+  ONETIME
+  DAILY
+  WEEKLY
+  MONTHLY
+  BIMONTHLY
+  QUARTERLY
+  HALFYEARLY
+  YEARLY
+}
+
+// ─────────────────────────────────────────────
+// VPA (Virtual Payment Address)
+// e.g. suraj@okicici, 9876543210@ybl
+// ─────────────────────────────────────────────
+model Vpa {
+  id            String    @id @default(uuid())
+
+  vpa           String    @unique          // e.g. "suraj@okicici"
+  handle        String                     // e.g. "okicici"
+
+  userId        String                     // ref → user-service
+  accountId     String                     // ref → account-service
+  bankCode      String                     // e.g. "ICICI"
+
+  isPrimary     Boolean   @default(false)
+  isDefault     Boolean   @default(false)
+
+  status        VpaStatus @default(ACTIVE)
+
+  // PIN — stored as bcrypt hash, NEVER plaintext
+  pinHash       String?
+
+  remarks       String?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  sentTransactions     UpiTransaction[]     @relation("SenderVpa")
+  receivedTransactions UpiTransaction[]     @relation("ReceiverVpa")
+  collectsInitiated    CollectRequest[]     @relation("CollectInitiator")
+  collectsReceived     CollectRequest[]     @relation("CollectTarget")
+  mandates             UpiMandate[]
+
+  @@index([userId])
+  @@index([accountId])
+  @@index([handle])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────
+// UPI Transaction
+// Records every PAY / COLLECT / REFUND
+// ─────────────────────────────────────────────
+model UpiTransaction {
+  id                  String               @id @default(uuid())
+
+  rrn                 String               @unique   // RRN — Retrieval Reference Number (NPCI)
+  txnRef              String               @unique   // internal reference
+
+  type                UpiTransactionType
+  status              UpiTransactionStatus @default(INITIATED)
+
+  senderVpaId         String
+  receiverVpaId       String
+
+  senderAccountId     String               // ref → account-service
+  receiverAccountId   String               // ref → account-service
+
+  amount              Decimal              @db.Decimal(18, 2)
+  currency            String               @default("INR")
+
+  description         String?
+  remarks             String?
+
+  // NPCI / bank references
+  bankTxnId           String?              // bank's internal ID
+  npciTxnId           String?              // NPCI assigned ID
+
+  failureReason       String?
+
+  initiatedAt         DateTime             @default(now())
+  completedAt         DateTime?
+
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  // Relations
+  senderVpa           Vpa                  @relation("SenderVpa",   fields: [senderVpaId],   references: [id])
+  receiverVpa         Vpa                  @relation("ReceiverVpa", fields: [receiverVpaId], references: [id])
+  collectRequest      CollectRequest?      @relation("CollectTxn")
+
+  @@index([senderVpaId])
+  @@index([receiverVpaId])
+  @@index([status])
+  @@index([type])
+  @@index([rrn])
+  @@index([initiatedAt])
+}
+
+// ─────────────────────────────────────────────
+// Collect Request (Pull Payment)
+// Receiver asks sender to pay
+// ─────────────────────────────────────────────
+model CollectRequest {
+  id               String               @id @default(uuid())
+
+  initiatorVpaId   String               // the one requesting money
+  targetVpaId      String               // the one who has to pay
+
+  amount           Decimal              @db.Decimal(18, 2)
+  currency         String               @default("INR")
+
+  description      String?
+  remarks          String?
+
+  status           CollectRequestStatus @default(PENDING)
+
+  expiresAt        DateTime             // collect requests expire (typically 24–48h)
+
+  transactionId    String?              @unique    // set when approved & paid
+  transaction      UpiTransaction?      @relation("CollectTxn", fields: [transactionId], references: [id])
+
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  initiatorVpa     Vpa                  @relation("CollectInitiator", fields: [initiatorVpaId], references: [id])
+  targetVpa        Vpa                  @relation("CollectTarget",    fields: [targetVpaId],    references: [id])
+
+  @@index([initiatorVpaId])
+  @@index([targetVpaId])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+// ─────────────────────────────────────────────
+// UPI Mandate (AutoPay / Recurring)
+// e.g. SIP, EMI, subscription
+// ─────────────────────────────────────────────
+model UpiMandate {
+  id              String           @id @default(uuid())
+
+  mandateRef      String           @unique     // UPI mandate reference
+
+  vpaId           String                       // payer VPA
+  payeeVpa        String                       // payee VPA (as string — may be external)
+  payeeAccountId  String?                      // ref → account-service
+
+  amount          Decimal          @db.Decimal(18, 2)
+  currency        String           @default("INR")
+
+  frequency       MandateFrequency
+
+  startDate       DateTime
+  endDate         DateTime
+
+  status          MandateStatus    @default(CREATED)
+
+  description     String?
+  remarks         String?
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  vpa             Vpa              @relation(fields: [vpaId], references: [id])
+
+  @@index([vpaId])
+  @@index([status])
+  @@index([frequency])
+  @@index([endDate])
+}
+
+// ─────────────────────────────────────────────
+// UPI PIN Attempt Log
+// Track failed PIN attempts per VPA (rate limiting / fraud)
+// ─────────────────────────────────────────────
+model PinAttemptLog {
+  id        String   @id @default(uuid())
+
+  vpaId     String
+  ipAddress String?
+  userAgent String?
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([vpaId])
+  @@index([createdAt])
+}

@@ -1,0 +1,161 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+  CLOSED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+}
+
+enum AddressType {
+  CURRENT
+  PERMANENT
+  OFFICE
+}
+
+enum KycStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model Customer {
+  id               String           @id @default(uuid())
+  customerNumber   String           @unique
+
+  firstName        String
+  middleName       String?
+  lastName         String
+
+  email            String           @unique
+  phone            String           @unique
+
+  dateOfBirth      DateTime
+
+  gender           Gender
+
+  occupation       String?
+
+  annualIncome     Decimal?         @db.Decimal(15,2)
+
+  maritalStatus    MaritalStatus?
+
+  status           CustomerStatus   @default(ACTIVE)
+
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  addresses        Address[]
+
+  nominee          Nominee?
+
+  kyc              KYC?
+}
+
+model Address {
+
+  id              String          @id @default(uuid())
+
+  customerId      String
+
+  customer        Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  type            AddressType
+
+  line1           String
+
+  line2           String?
+
+  landmark        String?
+
+  city            String
+
+  district        String
+
+  state           String
+
+  country         String
+
+  pincode         String
+
+  createdAt       DateTime        @default(now())
+
+  updatedAt       DateTime        @updatedAt
+}
+
+model Nominee {
+
+  id              String          @id @default(uuid())
+
+  customerId      String          @unique
+
+  customer        Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  fullName        String
+
+  relationship    String
+
+  dateOfBirth     DateTime
+
+  phone           String
+
+  email           String?
+
+  createdAt       DateTime        @default(now())
+
+  updatedAt       DateTime        @updatedAt
+}
+
+model KYC {
+
+  id              String          @id @default(uuid())
+
+  customerId      String          @unique
+
+  customer        Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  aadhaarNumber   String          @unique
+
+  panNumber       String          @unique
+
+  passportNumber  String?
+
+  voterId         String?
+
+  drivingLicense  String?
+
+  status          KycStatus       @default(PENDING)
+
+  verifiedBy      String?
+
+  verifiedAt      DateTime?
+
+  createdAt       DateTime        @default(now())
+
+  updatedAt       DateTime        @updatedAt
+}

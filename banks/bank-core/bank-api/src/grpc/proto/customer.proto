@@ -1,0 +1,161 @@
+syntax = "proto3";
+
+package customer;
+
+option java_multiple_files = true;
+
+// Customer Service
+
+service CustomerService {
+
+    // Create customer
+    rpc CreateCustomer(CreateCustomerRequest)
+        returns (CustomerResponse);
+
+    // Get all customers
+    rpc GetCustomers(GetCustomersRequest)
+        returns (CustomersResponse);
+
+    // Get customer by ID
+    rpc GetCustomerById(GetCustomerByIdRequest)
+        returns (CustomerResponse);
+
+    // Update customer
+    rpc UpdateCustomer(UpdateCustomerRequest)
+        returns (CustomerResponse);
+
+    // Delete customer
+    rpc DeleteCustomer(DeleteCustomerRequest)
+        returns (DeleteCustomerResponse);
+}
+
+// Customer
+message Customer {
+
+   string id = 1;
+
+    string firstName = 2;
+
+    string lastName = 3;
+
+    string email = 4;
+
+    string phone = 5;
+
+    string dateOfBirth = 6;
+
+    string address = 7;
+
+    string city = 8;
+
+    string state = 9;
+
+    string country = 10;
+
+    string pincode = 11;
+
+    string createdAt = 12;
+
+    string updatedAt = 13;
+}
+
+// Create Customer
+message CreateCustomerRequest {
+
+    string firstName = 1;
+
+    string lastName = 2;
+
+    string email = 3;
+
+    string phone = 4;
+
+    string dateOfBirth = 5;
+
+    string address = 6;
+
+    string city = 7;
+
+    string state = 8;
+
+    string country = 9;
+
+    string pincode = 10;
+}
+
+// Get All Customers
+
+message GetCustomersRequest {
+}
+
+// Get Customer By ID
+
+message GetCustomerByIdRequest {
+
+    string id = 1;
+}
+
+// Update Customer
+
+message UpdateCustomerRequest {
+
+    string id = 1;
+
+    string firstName = 2;
+
+    string lastName = 3;
+
+    string email = 4;
+
+    string phone = 5;
+
+    string dateOfBirth = 6;
+
+    string address = 7;
+
+    string city = 8;
+
+    string state = 9;
+
+    string country = 10;
+
+    string pincode = 11;
+}
+
+// Delete Customer
+
+message DeleteCustomerRequest {
+
+    string id = 1;
+}
+
+// Customer Response
+
+message CustomerResponse {
+
+    bool success = 1;
+
+    string message = 2;
+
+    Customer data = 3;
+}
+
+// Customers Response
+
+message CustomersResponse {
+
+    bool success = 1;
+
+    string message = 2;
+
+    repeated Customer data = 3;
+}
+
+//  Delete Customer Response
+
+message DeleteCustomerResponse {
+
+    bool success = 1;
+
+    string message = 2;
+}

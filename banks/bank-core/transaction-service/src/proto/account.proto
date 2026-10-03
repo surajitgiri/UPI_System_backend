@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package account;
+
+option java_multiple_files = true;
+
+// AccountService - exposed by account-service, consumed by transaction-service
+service AccountService {
+    rpc GetAccountById(GetAccountByIdRequest)   returns (AccountResponse);
+    rpc GetAccountByNumber(GetAccountByNumberRequest) returns (AccountResponse);
+    rpc DebitAccount(DebitAccountRequest)       returns (AccountOperationResponse);
+    rpc CreditAccount(CreditAccountRequest)     returns (AccountOperationResponse);
+    rpc ValidateAccount(ValidateAccountRequest) returns (ValidateAccountResponse);
+}
+
+message Account {
+    string id               = 1;
+    string accountNumber    = 2;
+    string customerId       = 3;
+    string branchId         = 4;
+    string accountType      = 5;
+    string status           = 6;
+    string currency         = 7;
+    string availableBalance = 8;
+    string holdBalance      = 9;
+    string minimumBalance   = 10;
+    string openingDate      = 11;
+    string createdAt        = 12;
+    string updatedAt        = 13;
+}
+
+message GetAccountByIdRequest {
+    string id = 1;
+}
+
+message GetAccountByNumberRequest {
+    string accountNumber = 1;
+}
+
+message DebitAccountRequest {
+    string accountId            = 1;
+    string amount               = 2;
+    string transactionReference = 3;
+}
+
+message CreditAccountRequest {
+    string accountId            = 1;
+    string amount               = 2;
+    string transactionReference = 3;
+}
+
+message ValidateAccountRequest {
+    string accountId = 1;
+    string amount    = 2;
+}
+
+message AccountResponse {
+    bool    success = 1;
+    string  message = 2;
+    Account data    = 3;
+}
+
+message AccountOperationResponse {
+    bool   success        = 1;
+    string message        = 2;
+    string updatedBalance = 3;
+}
+
+message ValidateAccountResponse {
+    bool   success              = 1;
+    string message              = 2;
+    bool   isValid              = 3;
+    bool   hasSufficientBalance = 4;
+}

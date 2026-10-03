@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package ledger;
+
+option java_multiple_files = true;
+
+// ─────────────────────────────────────────────
+// LedgerService — exposed by ledger-service,
+// consumed by transaction-service
+// ─────────────────────────────────────────────
+
+service LedgerService {
+    rpc CreateLedgerEntry(CreateLedgerEntryRequest) returns (LedgerEntryResponse);
+    rpc CreateLedgerEntries(CreateLedgerEntriesRequest) returns (LedgerEntriesResponse);
+    rpc GetLedgerEntryById(GetLedgerEntryByIdRequest) returns (LedgerEntryResponse);
+    rpc GetEntriesByTransactionId(GetByTransactionIdRequest) returns (LedgerEntriesResponse);
+    rpc GetEntriesByAccountId(GetByAccountIdRequest) returns (LedgerEntriesResponse);
+}
+
+// ─────────────────────────────────────────────
+// LedgerEntry message
+// ─────────────────────────────────────────────
+message LedgerEntry {
+    string id = 1;
+    string transactionId = 2;
+    string accountId = 3;
+    string entryType = 4;    // DEBIT | CREDIT
+    string amount = 5;    // Decimal as string
+    string currency = 6;
+    string balanceBefore = 7;     // Decimal as string
+    string balanceAfter  = 8;     // Decimal as string
+    string status = 9;            // POSTED | REVERSED
+    string description = 10;
+    string reference = 11;
+    string createdAt = 12;
+    string updatedAt = 13;
+}
+
+// ─────────────────────────────────────────────
+// Requests
+// ─────────────────────────────────────────────
+message CreateLedgerEntryRequest {
+    string transactionId = 1;
+    string accountId     = 2;
+    string entryType     = 3;   // DEBIT | CREDIT
+    string amount        = 4;
+    string currency      = 5;
+    string balanceBefore = 6;
+    string balanceAfter  = 7;
+    string description   = 8;
+    string reference     = 9;
+}
+
+message CreateLedgerEntriesRequest {
+    repeated CreateLedgerEntryRequest entries = 1;
+}
+message GetLedgerEntryByIdRequest {
+    string id = 1;
+}
+message GetByTransactionIdRequest {
+    string transactionId = 1;
+}
+message GetByAccountIdRequest {
+    string accountId = 1;
+}
+
+// ─────────────────────────────────────────────
+// Responses
+// ─────────────────────────────────────────────
+message LedgerEntryResponse {
+    bool success = 1;
+    string message = 2;
+    LedgerEntry data = 3;
+}
+
+message LedgerEntriesResponse {
+    bool success = 1;
+    string message = 2;
+    repeated LedgerEntry  data = 3;
+}

@@ -1,0 +1,137 @@
+syntax = "proto3";
+
+package ledger;
+
+
+// Ledger Service
+
+
+service LedgerService {
+
+    // Get ledger entry by ID
+    rpc GetLedgerById(GetLedgerByIdRequest) returns (LedgerResponse);
+
+    // Get all ledger entries for an account
+    rpc GetLedgerByAccountId(GetLedgerByAccountIdRequest) returns (LedgersResponse);
+
+    // Get latest ledger entry for an account
+    rpc GetLatestLedgerByAccountId(GetLedgerByAccountIdRequest) returns (LedgerResponse);
+
+    // Get paginated ledger entries
+    rpc GetLedgerByAccountIdPaginated(
+        GetLedgerByAccountIdPaginatedRequest
+    ) returns (PaginatedLedgerResponse);
+
+    // Get ledger entry by transaction ID
+    rpc GetLedgerByTransactionId(GetLedgerByTransactionIdRequest)
+        returns (LedgerResponse);
+}
+
+
+// Ledger
+
+message Ledger {
+
+    string id = 1;
+
+    string accountId = 2;
+
+    string transactionId = 3;
+
+    string entryType = 4;
+
+    string amount = 5;
+
+    string balanceBefore = 6;
+
+    string balanceAfter = 7;
+
+    string description = 8;
+
+    string createdAt = 9;
+
+    string updatedAt = 10;
+}
+
+
+// Get Ledger By ID
+
+message GetLedgerByIdRequest {
+
+    string id = 1;
+}
+
+// Get Ledger By Account ID
+
+message GetLedgerByAccountIdRequest {
+
+    string accountId = 1;
+}
+
+// Get Paginated Ledger
+
+message GetLedgerByAccountIdPaginatedRequest {
+
+    string accountId = 1;
+
+    int32 page = 2;
+
+    int32 limit = 3;
+}
+
+// Get Ledger By Transaction ID
+
+message GetLedgerByTransactionIdRequest {
+
+    string transactionId = 1;
+}
+
+// Single Ledger Response
+
+message LedgerResponse {
+
+    bool success = 1;
+
+    string message = 2;
+
+    Ledger data = 3;
+}
+
+
+// Multiple Ledger Response
+
+message LedgersResponse {
+
+    bool success = 1;
+
+    string message = 2;
+
+    repeated Ledger data = 3;
+}
+
+// Pagination
+
+message Pagination {
+
+    int32 page = 1;
+
+    int32 limit = 2;
+
+    int32 total = 3;
+
+    int32 totalPages = 4;
+}
+
+
+//Paginated Ledger Response
+
+message PaginatedLedgerResponse {
+
+    bool success = 1;
+
+    string message = 2;
+
+    repeated Ledger data = 3;
+
+    Pagination pagination = 4;
+}

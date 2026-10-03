@@ -1,0 +1,142 @@
+syntax = "proto3";
+
+package upi;
+
+// ─────────────────────────────────────────────────────────────
+// UpiService — exposed to other microservices via gRPC
+// Allows transaction-orchestrator / bank-api to:
+//   1. Resolve a VPA address → account details
+//   2. Validate a VPA is ACTIVE
+//   3. Verify UPI PIN before debiting
+//   4. Record a completed UPI transaction
+// ─────────────────────────────────────────────────────────────
+
+service UpiService {
+    // Resolve VPA address → VPA record with accountId
+    rpc GetVpaByAddress  (GetVpaByAddressRequest)  returns (VpaResponse);
+
+    // Validate VPA is ACTIVE (used before routing a payment)
+    rpc ValidateVpa      (ValidateVpaRequest)       returns (ValidateVpaResponse);
+
+    // Verify UPI PIN (used by orchestrator before debiting)
+    rpc VerifyUpiPin     (VerifyUpiPinRequest)      returns (VerifyUpiPinResponse);
+
+    // Record a completed UPI transaction (called after bank settles)
+    rpc RecordTransaction (RecordTransactionRequest) returns (UpiTransactionResponse);
+
+    // Get UPI transaction by ID
+    rpc GetTransaction   (GetTransactionRequest)    returns (UpiTransactionResponse);
+}
+
+// ─────────────────────────────────────────────
+// Shared / Nested Messages
+// ─────────────────────────────────────────────
+
+message VpaData {
+    string id         = 1;
+    string vpa        = 2;
+    string handle     = 3;
+    string userId     = 4;
+    string accountId  = 5;
+    string bankCode   = 6;
+    bool   isPrimary  = 7;
+    bool   isDefault  = 8;
+    string status     = 9;
+}
+
+message UpiTransactionData {
+    string id                 = 1;
+    string rrn                = 2;
+    string txnRef             = 3;
+    string type               = 4;
+    string status             = 5;
+    string senderVpaId        = 6;
+    string receiverVpaId      = 7;
+    string senderAccountId    = 8;
+    string receiverAccountId  = 9;
+    string amount             = 10;
+    string currency           = 11;
+    string description        = 12;
+    string failureReason      = 13;
+    string initiatedAt        = 14;
+    string completedAt        = 15;
+}
+
+// ─────────────────────────────────────────────
+// GetVpaByAddress
+// ─────────────────────────────────────────────
+
+message GetVpaByAddressRequest {
+    string vpaAddress = 1;   // e.g. "suraj@okicici"
+}
+
+message VpaResponse {
+    bool    success = 1;
+    string  message = 2;
+    VpaData data    = 3;
+}
+
+// ─────────────────────────────────────────────
+// ValidateVpa
+// ─────────────────────────────────────────────
+
+message ValidateVpaRequest {
+    string vpaAddress = 1;
+}
+
+message ValidateVpaResponse {
+    bool   success   = 1;
+    string message   = 2;
+    bool   isActive  = 3;
+    string accountId = 4;
+}
+
+// ─────────────────────────────────────────────
+// VerifyUpiPin
+// ─────────────────────────────────────────────
+
+message VerifyUpiPinRequest {
+    string vpaId     = 1;
+    string pin       = 2;
+    string ipAddress = 3;
+    string userAgent = 4;
+}
+
+message VerifyUpiPinResponse {
+    bool   success  = 1;
+    string message  = 2;
+    bool   verified = 3;
+}
+
+// ─────────────────────────────────────────────
+// RecordTransaction
+// ─────────────────────────────────────────────
+
+message RecordTransactionRequest {
+    string rrn               = 1;
+    string txnRef            = 2;
+    string type              = 3;   // PAY | COLLECT | REFUND
+    string senderVpaId       = 4;
+    string receiverVpaId     = 5;
+    string senderAccountId   = 6;
+    string receiverAccountId = 7;
+    string amount            = 8;
+    string currency          = 9;
+    string description       = 10;
+    string bankTxnId         = 11;
+    string npciTxnId         = 12;
+}
+
+message UpiTransactionResponse {
+    bool               success = 1;
+    string             message = 2;
+    UpiTransactionData data    = 3;
+}
+
+// ─────────────────────────────────────────────
+// GetTransaction
+// ─────────────────────────────────────────────
+
+message GetTransactionRequest {
+    string id = 1;
+}

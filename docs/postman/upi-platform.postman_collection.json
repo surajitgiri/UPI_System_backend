@@ -1,0 +1,196 @@
+{
+  "info": {
+    "name": "UPI Service",
+    "_postman_id": "upi-service-collection-v1",
+    "description": "Complete API collection for the UPI Service — VPA management, UPI transactions (pay/collect/refund), collect requests, and mandates.\n\nBase URL: http://localhost:5006/api/v1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5006/api/v1", "type": "string" },
+    { "key": "vpaId", "value": "", "type": "string" },
+    { "key": "transactionId", "value": "", "type": "string" },
+    { "key": "collectRequestId", "value": "", "type": "string" },
+    { "key": "mandateId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": { "method": "GET", "header": [], "url": { "raw": "http://localhost:5006/health", "protocol": "http", "host": ["localhost"], "port": "5006", "path": ["health"] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "VPA",
+      "item": [
+        {
+          "name": "Create VPA",
+          "event": [{ "listen": "test", "script": { "exec": ["const res = pm.response.json(); if (res.data && res.data.id) { pm.collectionVariables.set(\"vpaId\", res.data.id); }"], "type": "text/javascript" } }],
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"vpa\": \"suraj@okicici\",\n  \"userId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"accountId\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"bankCode\": \"ICICI\",\n  \"isPrimary\": true,\n  \"isDefault\": true,\n  \"remarks\": \"Primary VPA\"\n}" }, "url": { "raw": "{{baseUrl}}/vpas", "host": ["{{baseUrl}}"], "path": ["vpas"] } },
+          "response": []
+        },
+        {
+          "name": "Get All VPAs",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/vpas", "host": ["{{baseUrl}}"], "path": ["vpas"] } },
+          "response": []
+        },
+        {
+          "name": "Get VPA by ID",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/vpas/{{vpaId}}", "host": ["{{baseUrl}}"], "path": ["vpas", "{{vpaId}}"] } },
+          "response": []
+        },
+        {
+          "name": "Get VPA by Address",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/vpas/address/suraj@okicici", "host": ["{{baseUrl}}"], "path": ["vpas", "address", "suraj@okicici"] } },
+          "response": []
+        },
+        {
+          "name": "Get VPAs by User ID",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/vpas/user/550e8400-e29b-41d4-a716-446655440000", "host": ["{{baseUrl}}"], "path": ["vpas", "user", "550e8400-e29b-41d4-a716-446655440000"] } },
+          "response": []
+        },
+        {
+          "name": "Update VPA",
+          "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"isPrimary\": true,\n  \"remarks\": \"Updated remark\"\n}" }, "url": { "raw": "{{baseUrl}}/vpas/{{vpaId}}", "host": ["{{baseUrl}}"], "path": ["vpas", "{{vpaId}}"] } },
+          "response": []
+        },
+        {
+          "name": "Suspend VPA",
+          "request": { "method": "PATCH", "header": [], "url": { "raw": "{{baseUrl}}/vpas/{{vpaId}}/suspend", "host": ["{{baseUrl}}"], "path": ["vpas", "{{vpaId}}", "suspend"] } },
+          "response": []
+        },
+        {
+          "name": "Activate VPA",
+          "request": { "method": "PATCH", "header": [], "url": { "raw": "{{baseUrl}}/vpas/{{vpaId}}/activate", "host": ["{{baseUrl}}"], "path": ["vpas", "{{vpaId}}", "activate"] } },
+          "response": []
+        },
+        {
+          "name": "Delete VPA",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{baseUrl}}/vpas/{{vpaId}}", "host": ["{{baseUrl}}"], "path": ["vpas", "{{vpaId}}"] } },
+          "response": []
+        },
+        {
+          "name": "Set UPI PIN",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"pin\": \"1234\",\n  \"accountNumber\": \"123456789\",\n  \"expiryDate\": \"12/27\"\n}" }, "url": { "raw": "{{baseUrl}}/vpas/{{vpaId}}/set-pin", "host": ["{{baseUrl}}"], "path": ["vpas", "{{vpaId}}", "set-pin"] } },
+          "response": []
+        },
+        {
+          "name": "Verify UPI PIN",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"pin\": \"1234\"\n}" }, "url": { "raw": "{{baseUrl}}/vpas/{{vpaId}}/verify-pin", "host": ["{{baseUrl}}"], "path": ["vpas", "{{vpaId}}", "verify-pin"] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "UPI Transactions",
+      "item": [
+        {
+          "name": "Get All Transactions",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/transactions", "host": ["{{baseUrl}}"], "path": ["transactions"] } },
+          "response": []
+        },
+        {
+          "name": "Initiate Pay (Push Payment)",
+          "event": [{ "listen": "test", "script": { "exec": ["const res = pm.response.json(); if (res.data && res.data.id) { pm.collectionVariables.set(\"transactionId\", res.data.id); }"], "type": "text/javascript" } }],
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"senderVpa\": \"suraj@okicici\",\n  \"receiverVpa\": \"raj@ybl\",\n  \"amount\": 500.00,\n  \"currency\": \"INR\",\n  \"description\": \"Rent payment\",\n  \"remarks\": \"July rent\",\n  \"upiPin\": \"1234\"\n}" }, "url": { "raw": "{{baseUrl}}/transactions/pay", "host": ["{{baseUrl}}"], "path": ["transactions", "pay"] } },
+          "response": []
+        },
+        {
+          "name": "Initiate Refund",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"originalTransactionId\": \"{{transactionId}}\",\n  \"amount\": 500.00,\n  \"remarks\": \"Wrong payment refund\"\n}" }, "url": { "raw": "{{baseUrl}}/transactions/refund", "host": ["{{baseUrl}}"], "path": ["transactions", "refund"] } },
+          "response": []
+        },
+        {
+          "name": "Get Transaction by ID",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/transactions/{{transactionId}}", "host": ["{{baseUrl}}"], "path": ["transactions", "{{transactionId}}"] } },
+          "response": []
+        },
+        {
+          "name": "Get Transaction by RRN",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/transactions/rrn/123456789012", "host": ["{{baseUrl}}"], "path": ["transactions", "rrn", "123456789012"] } },
+          "response": []
+        },
+        {
+          "name": "Get Transactions by VPA ID",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/transactions/vpa/{{vpaId}}", "host": ["{{baseUrl}}"], "path": ["transactions", "vpa", "{{vpaId}}"] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Collect Requests",
+      "item": [
+        {
+          "name": "Create Collect Request",
+          "event": [{ "listen": "test", "script": { "exec": ["const res = pm.response.json(); if (res.data && res.data.id) { pm.collectionVariables.set(\"collectRequestId\", res.data.id); }"], "type": "text/javascript" } }],
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"initiatorVpa\": \"raj@ybl\",\n  \"targetVpa\": \"suraj@okicici\",\n  \"amount\": 250.00,\n  \"currency\": \"INR\",\n  \"description\": \"Split bill\",\n  \"remarks\": \"Dinner at The Taj\",\n  \"expiresInHours\": 24\n}" }, "url": { "raw": "{{baseUrl}}/collect", "host": ["{{baseUrl}}"], "path": ["collect"] } },
+          "response": []
+        },
+        {
+          "name": "Get Collect Request by ID",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/collect/{{collectRequestId}}", "host": ["{{baseUrl}}"], "path": ["collect", "{{collectRequestId}}"] } },
+          "response": []
+        },
+        {
+          "name": "Get Inbox (Pending for VPA)",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/collect/inbox/suraj@okicici", "host": ["{{baseUrl}}"], "path": ["collect", "inbox", "suraj@okicici"] } },
+          "response": []
+        },
+        {
+          "name": "Get Sent Requests by VPA",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/collect/sent/raj@ybl", "host": ["{{baseUrl}}"], "path": ["collect", "sent", "raj@ybl"] } },
+          "response": []
+        },
+        {
+          "name": "Approve Collect Request",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"upiPin\": \"1234\"\n}" }, "url": { "raw": "{{baseUrl}}/collect/{{collectRequestId}}/approve", "host": ["{{baseUrl}}"], "path": ["collect", "{{collectRequestId}}", "approve"] } },
+          "response": []
+        },
+        {
+          "name": "Reject Collect Request",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"targetVpaId\": \"{{vpaId}}\"\n}" }, "url": { "raw": "{{baseUrl}}/collect/{{collectRequestId}}/reject", "host": ["{{baseUrl}}"], "path": ["collect", "{{collectRequestId}}", "reject"] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Mandates",
+      "item": [
+        {
+          "name": "Create Mandate",
+          "event": [{ "listen": "test", "script": { "exec": ["const res = pm.response.json(); if (res.data && res.data.id) { pm.collectionVariables.set(\"mandateId\", res.data.id); }"], "type": "text/javascript" } }],
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"vpaAddress\": \"suraj@okicici\",\n  \"payeeVpa\": \"sip@hdfcbank\",\n  \"payeeAccountId\": \"550e8400-e29b-41d4-a716-446655440002\",\n  \"amount\": 5000.00,\n  \"currency\": \"INR\",\n  \"frequency\": \"MONTHLY\",\n  \"startDate\": \"2026-10-01T00:00:00.000Z\",\n  \"endDate\": \"2031-09-30T00:00:00.000Z\",\n  \"description\": \"Mutual Fund SIP\",\n  \"remarks\": \"HDFC Equity Fund\"\n}" }, "url": { "raw": "{{baseUrl}}/mandates", "host": ["{{baseUrl}}"], "path": ["mandates"] } },
+          "response": []
+        },
+        {
+          "name": "Get Mandate by ID",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/mandates/{{mandateId}}", "host": ["{{baseUrl}}"], "path": ["mandates", "{{mandateId}}"] } },
+          "response": []
+        },
+        {
+          "name": "Get Mandates by VPA",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/mandates/vpa/suraj@okicici", "host": ["{{baseUrl}}"], "path": ["mandates", "vpa", "suraj@okicici"] } },
+          "response": []
+        },
+        {
+          "name": "Activate Mandate",
+          "request": { "method": "PATCH", "header": [], "url": { "raw": "{{baseUrl}}/mandates/{{mandateId}}/activate", "host": ["{{baseUrl}}"], "path": ["mandates", "{{mandateId}}", "activate"] } },
+          "response": []
+        },
+        {
+          "name": "Pause Mandate",
+          "request": { "method": "PATCH", "header": [], "url": { "raw": "{{baseUrl}}/mandates/{{mandateId}}/pause", "host": ["{{baseUrl}}"], "path": ["mandates", "{{mandateId}}", "pause"] } },
+          "response": []
+        },
+        {
+          "name": "Revoke Mandate",
+          "request": { "method": "PATCH", "header": [], "url": { "raw": "{{baseUrl}}/mandates/{{mandateId}}/revoke", "host": ["{{baseUrl}}"], "path": ["mandates", "{{mandateId}}", "revoke"] } },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

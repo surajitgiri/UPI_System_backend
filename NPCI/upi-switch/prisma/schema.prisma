@@ -1,0 +1,238 @@
+// ─────────────────────────────────────────────────────────────────
+// UPI Switch — Prisma Schema
+// Central NPCI clearing switch that routes, settles, and records
+// all UPI transactions across participant banks.
+// ─────────────────────────────────────────────────────────────────
+
+generator client {
+    provider        = "prisma-client-js"
+    output          = "../generated/prisma"
+    previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum SwitchTxnStatus {
+    RECEIVED         // Request received from bank's UPI service
+    ROUTING          // Resolving VPAs via participant-routing
+    VALIDATING       // Checking balances and limits
+    PROCESSING       // Debit/credit in progress
+    SUCCESS          // Fully settled
+    FAILED           // Settlement failed
+    REVERSED         // Transaction reversed after success
+    REVERSAL_PENDING // Reversal initiated, pending settlement
+    TIMEOUT          // No response within timeout window
+    DUPLICATE        // Duplicate RRN detected
+}
+
+enum SwitchTxnType {
+    PAY              // Push payment (P2P / P2M)
+    COLLECT          // Pull payment
+    REFUND           // Refund of a previous PAY
+    REVERSAL         // System-initiated reversal
+}
+
+enum ReversalStatus {
+    INITIATED
+    PROCESSING
+    SUCCESS
+    FAILED
+}
+
+enum ReversalReason {
+    TECHNICAL_FAILURE
+    TIMEOUT
+    BENEFICIARY_NOT_FOUND
+    BANK_REFUSED
+    DUPLICATE_TRANSACTION
+    CUSTOMER_REQUEST
+    FRAUD_DETECTED
+    COMPLIANCE
+}
+
+enum SwitchLogLevel {
+    INFO
+    WARN
+    ERROR
+    DEBUG
+}
+
+// ─────────────────────────────────────────────
+// SwitchTransaction
+// Master record for every transaction that
+// passes through the NPCI switch
+// ─────────────────────────────────────────────
+
+model SwitchTransaction {
+    id        String   @id @default(uuid())
+    rrn       String   @unique          // Retrieval Reference Number (12 digits)
+    txnRef    String   @unique          // End-to-end transaction reference (UUID)
+    npciTxnId String?  @unique          // NPCI-assigned transaction ID
+
+    type      SwitchTxnType
+    status    SwitchTxnStatus @default(RECEIVED)
+
+    // ── Sender (Payer) ─────────────────────────
+    senderVpa          String           // e.g. "suraj@okicici"
+    senderBankCode     String           // e.g. "ICICI"
+    senderAccountId    String           // account-service accountId
+    senderIfsc         String?
+
+    // ── Receiver (Payee) ───────────────────────
+    receiverVpa        String           // e.g. "raj@ybl"
+    receiverBankCode   String           // e.g. "YESBANK"
+    receiverAccountId  String           // account-service accountId
+    receiverIfsc       String?
+
+    // ── Amount ─────────────────────────────────
+    amount             Decimal          @db.Decimal(18, 2)
+    currency           String           @default("INR")
+
+    // ── Routing metadata ───────────────────────
+    senderPsp          String?          // PSP / app used by sender (PhonePe, GPay…)
+    receiverPsp        String?
+    routedAt           DateTime?        // when participant-routing resolved VPAs
+    participantRouteId String?          // routing record from participant-routing service
+
+    // ── Settlement metadata ────────────────────
+    debitedAt          DateTime?        // when debit was applied on sender account
+    creditedAt         DateTime?        // when credit was applied on receiver account
+    settledAt          DateTime?        // when both debit + credit confirmed
+
+    // ── Original txn (for refunds/reversals) ──
+    originalTxnId      String?          // points to SwitchTransaction.id
+
+    // ── Failure ────────────────────────────────
+    failureReason      String?
+    failureCode        String?          // NPCI error code (e.g. "U09", "ZM")
+
+    // ── Timing ─────────────────────────────────
+    description        String?
+    remarks            String?
+    receivedAt         DateTime         @default(now())
+    completedAt        DateTime?
+    createdAt          DateTime         @default(now())
+    updatedAt          DateTime         @updatedAt
+
+    // ── Relations ──────────────────────────────
+    logs              SwitchLog[]
+    reversalRequest   ReversalRequest?
+    originalTxn       SwitchTransaction?  @relation("Refunds", fields: [originalTxnId], references: [id])
+    refunds           SwitchTransaction[] @relation("Refunds")
+
+    @@index([senderVpa])
+    @@index([receiverVpa])
+    @@index([senderBankCode])
+    @@index([receiverBankCode])
+    @@index([status])
+    @@index([type])
+    @@index([receivedAt])
+    @@index([settledAt])
+    @@map("switch_transactions")
+}
+
+// ─────────────────────────────────────────────
+// ReversalRequest
+// Raised when a successful transaction needs
+// to be reversed (timeout/duplicate/fraud)
+// ─────────────────────────────────────────────
+
+model ReversalRequest {
+    id            String         @id @default(uuid())
+    txnId         String         @unique    // SwitchTransaction.id
+    reversalRrn   String         @unique    // New RRN for the reversal leg
+    reason        ReversalReason
+    status        ReversalStatus @default(INITIATED)
+
+    // Who raised it
+    raisedBy      String         // "system" | "bank:{bankCode}" | "customer"
+    raisedAt      DateTime       @default(now())
+
+    // Settlement
+    reversedAt    DateTime?
+    failureReason String?
+    remarks       String?
+
+    createdAt     DateTime       @default(now())
+    updatedAt     DateTime       @updatedAt
+
+    // ── Relations ──────────────────────────────
+    transaction   SwitchTransaction @relation(fields: [txnId], references: [id])
+
+    @@index([status])
+    @@index([reason])
+    @@index([raisedAt])
+    @@map("reversal_requests")
+}
+
+// ─────────────────────────────────────────────
+// SwitchLog
+// Audit trail — every state change and
+// external call for a transaction is logged
+// ─────────────────────────────────────────────
+
+model SwitchLog {
+    id        String         @id @default(uuid())
+    txnId     String
+    level     SwitchLogLevel @default(INFO)
+
+    event     String         // e.g. "ROUTING_STARTED", "DEBIT_SUCCESS"
+    message   String
+    metadata  Json?          // gRPC response payload, error details, etc.
+
+    createdAt DateTime       @default(now())
+
+    // ── Relations ──────────────────────────────
+    transaction SwitchTransaction @relation(fields: [txnId], references: [id])
+
+    @@index([txnId])
+    @@index([event])
+    @@index([level])
+    @@index([createdAt])
+    @@map("switch_logs")
+}
+
+// ─────────────────────────────────────────────
+// SwitchLimit
+// Per-bank transaction limits enforced
+// by the switch (e.g. max daily amount)
+// ─────────────────────────────────────────────
+
+model SwitchLimit {
+    id              String   @id @default(uuid())
+    bankCode        String   @unique
+    maxSingleTxnAmt Decimal  @db.Decimal(18, 2) @default(100000.00)  // ₹1L default
+    maxDailyAmt     Decimal  @db.Decimal(18, 2) @default(1000000.00) // ₹10L default
+    maxDailyCount   Int      @default(20)                             // 20 txns/day
+    isActive        Boolean  @default(true)
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+
+    @@index([bankCode])
+    @@map("switch_limits")
+}
+
+// ─────────────────────────────────────────────
+// DuplicateCheck
+// Short-lived record (TTL ~24h) used to
+// detect duplicate RRNs from the same bank
+// ─────────────────────────────────────────────
+
+model DuplicateCheck {
+    id        String   @id @default(uuid())
+    rrn       String   @unique
+    bankCode  String
+    txnId     String
+    expiresAt DateTime
+    createdAt DateTime @default(now())
+
+    @@index([rrn])
+    @@index([expiresAt])
+    @@map("duplicate_checks")
+}

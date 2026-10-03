@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+
+enum AccountType {
+  SAVINGS
+  CURRENT
+  SALARY
+  FIXED_DEPOSIT
+}
+
+enum AccountStatus {
+  ACTIVE
+  FROZEN
+  CLOSED
+  DORMANT
+}
+
+model Branch {
+  id          String   @id @default(uuid())
+
+  branchCode  String   @unique
+  branchName  String
+
+  ifscCode    String   @unique
+
+  address     String
+
+  city        String
+
+  state       String
+
+  country     String
+
+  pincode     String
+
+  phone       String?
+
+  email       String?
+
+  managerName String?
+
+  createdAt   DateTime @default(now())
+
+  updatedAt   DateTime @updatedAt
+
+  accounts    Account[]
+}
+
+model Account {
+
+  id               String @id @default(uuid())
+
+  accountNumber    String @unique
+
+  customerId       String
+
+  branchId         String
+
+  accountType      AccountType
+
+  status           AccountStatus @default(ACTIVE)
+
+  currency         String @default("INR")
+
+  availableBalance Decimal @db.Decimal(18,2)
+
+  holdBalance      Decimal @default(0) @db.Decimal(18,2)
+
+  minimumBalance   Decimal @default(0) @db.Decimal(18,2)
+
+  openingDate      DateTime @default(now())
+
+  branch           Branch @relation(fields: [branchId], references: [id])
+
+  limits           AccountLimit?
+
+  createdAt        DateTime @default(now())
+
+  updatedAt        DateTime @updatedAt
+}
+
+model AccountLimit{
+
+  id String @id @default(uuid())
+
+  accountId String @unique
+
+  dailyDebitLimit Decimal @default(100000) @db.Decimal(18,2)
+
+  dailyCreditLimit Decimal @default(500000) @db.Decimal(18,2)
+
+  monthlyTransferLimit Decimal @default(1000000) @db.Decimal(18,2)
+
+  account Account @relation(fields: [accountId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+}
