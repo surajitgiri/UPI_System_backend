@@ -11,7 +11,7 @@ async function startServer() {
         console.log("✅ PostgreSQL Connected");
 
         // Start gRPC server
-        const grpcPort = process.env.GRPC_PORT || 50056;
+        const grpcPort = process.env.GRPC_PORT;
         startGrpcServer(grpcPort);
 
         const server = app.listen(env.PORT, () => {
