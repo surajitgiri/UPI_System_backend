@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package switch;
+
+// SwitchService — exposed by the NPCI upi-switch to bank services
+service SwitchService {
+    rpc ProcessPayment    (ProcessPaymentRequest)    returns (SwitchTransactionResponse);
+    rpc GetTransaction    (GetSwitchTxnRequest)      returns (SwitchTransactionResponse);
+    rpc GetTransactionByRrn (GetByRrnRequest)        returns (SwitchTransactionResponse);
+    rpc InitiateReversal  (InitiateReversalRequest)  returns (ReversalResponse);
+    rpc GetReversal       (GetReversalRequest)       returns (ReversalResponse);
+}
+
+message SwitchTransactionData {
+    string id                = 1;
+    string rrn               = 2;
+    string txnRef            = 3;
+    string npciTxnId         = 4;
+    string type              = 5;
+    string status            = 6;
+    string senderVpa         = 7;
+    string receiverVpa       = 8;
+    string senderBankCode    = 9;
+    string receiverBankCode  = 10;
+    string senderAccountId   = 11;
+    string receiverAccountId = 12;
+    string amount            = 13;
+    string currency          = 14;
+    string description       = 15;
+    string failureReason     = 16;
+    string failureCode       = 17;
+    string createdAt         = 18;
+    string updatedAt         = 19;
+}
+
+message ReversalData {
+    string id          = 1;
+    string txnId       = 2;
+    string reversalRrn = 3;
+    string reason      = 4;
+    string raisedBy    = 5;
+    string remarks     = 6;
+    string status      = 7;
+    string createdAt   = 8;
+    string updatedAt   = 9;
+}
+
+message ProcessPaymentRequest {
+    string txnRef      = 1;
+    string type        = 2;   // PAY | COLLECT
+    string senderVpa   = 3;
+    string receiverVpa = 4;
+    string amount      = 5;
+    string currency    = 6;
+    string description = 7;
+    string remarks     = 8;
+    string senderPsp   = 9;
+    string receiverPsp = 10;
+}
+
+message GetSwitchTxnRequest {
+    string id = 1;
+}
+
+message GetByRrnRequest {
+    string rrn = 1;
+}
+
+message InitiateReversalRequest {
+    string txnId    = 1;
+    string reason   = 2;
+    string raisedBy = 3;
+    string remarks  = 4;
+}
+
+message GetReversalRequest {
+    string id = 1;
+}
+
+message SwitchTransactionResponse {
+    bool                  success = 1;
+    string                message = 2;
+    SwitchTransactionData data    = 3;
+}
+
+message ReversalResponse {
+    bool         success = 1;
+    string       message = 2;
+    ReversalData data    = 3;
+}
