@@ -1,11 +1,11 @@
 import "dotenv/config"; // MUST be first — loads .env before any module reads process.env
-import app    from "./app.js";
+import app from "./app.js";
 import prisma from "./config/db.js";
 import { startGrpcServer } from "./grpc/server.js";
 
-const PORT      = process.env.PORT      || 5010;
+const PORT = process.env.PORT || 5010;
 const GRPC_PORT = process.env.GRPC_PORT || 50060;
-const NODE_ENV  = process.env.NODE_ENV  || "development";
+const NODE_ENV = process.env.NODE_ENV || "development";
 
 async function startServer() {
     try {
@@ -41,7 +41,7 @@ Health      : http://localhost:${PORT}/health
             });
         };
 
-        process.on("SIGINT",  () => gracefulShutdown("SIGINT"));
+        process.on("SIGINT", () => gracefulShutdown("SIGINT"));
         process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 
     } catch (error) {

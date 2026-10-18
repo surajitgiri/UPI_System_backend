@@ -1,5 +1,5 @@
-import AppError from "../errors/AppError";
-import { successResponse } from "../utils/response";
+import AppError from "../errors/AppError.js";
+import { successResponse } from "../utils/response.js";
 import reversalService from "../services/reversal.service.js";
 
 
