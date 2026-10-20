@@ -32,3 +32,69 @@ function toTxn(t) {
         updatedAt: iso(t.updatedAt),
     };
 }
+
+
+function toRevarsal(r) {
+    if (!r) return null;
+    return {
+        id: str(r.id),
+        txnId: str(r.txnId),
+        reversalRrn: str(r.reversalRrn),
+        reason: str(r.reason),
+        raisedBy: str(r.raisedBy),
+        remarks: str(r.remarks),
+        status: str(r.status),
+        createdAt: iso(r.createdAt),
+        updatedAt: iso(r.updatedAt),
+    };
+}
+
+// Wraps a handler so errors become { success:false, message } instead of gRPC errors
+const wrap = (fn) => async (call, callback) => {
+    try {
+        callback(null, await fn(call.request));
+    } catch (error) {
+        callback(null, { success: false, message: error.message || "Internal error", data: null });
+    }
+};
+
+export const processPayment = wrap(async (req) => {
+    const txn = await switchService.initiatePayment({
+        txnRef: req.txnRef || undefined,
+        type: req.type || "PAY",
+        senderVpa: req.senderVpa,
+        receiverVpa: req.receiverVpa,
+        amount: req.amount,
+        currency: req.currency || "INR",
+        description: req.description || undefined,
+        remarks: req.remarks || undefined,
+        senderPsp: req.senderPsp || undefined,
+        receiverPsp: req.receiverPsp || undefined,
+    });
+    return { success: true, message: "Payment processed", data: toTxn(txn) };
+});
+
+export const getTransaction = wrap(async (req) => {
+    const txn = await switchService.getTransaction(req.id);
+    return { success: true, message: "Transaction fetched", data: toTxn(txn) };
+});
+
+export const getTransactionByRrn = wrap(async (req) => {
+    const txn = await switchService.getByRrn(req.rrn);
+    return { success: true, message: "Transaction fetched", data: toTxn(txn) };
+});
+
+export const initiateReversal = wrap(async (req) => {
+    const reversal = await reversalService.initiateReversal({
+        txnId: req.txnId,
+        reason: req.reason,
+        raisedBy: req.raisedBy || "system",
+        remarks: req.remarks || undefined,
+    });
+    return { success: true, message: "Reversal processed", data: toReversal(reversal) };
+});
+
+export const getReversal = wrap(async (req) => {
+    const reversal = await reversalService.getReversalById(req.id);
+    return { success: true, message: "Reversal fetched", data: toReversal(reversal) };
+});
