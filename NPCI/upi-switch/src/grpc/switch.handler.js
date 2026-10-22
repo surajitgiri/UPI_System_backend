@@ -34,7 +34,7 @@ function toTxn(t) {
 }
 
 
-function toRevarsal(r) {
+function toReversal(r) {
     if (!r) return null;
     return {
         id: str(r.id),
