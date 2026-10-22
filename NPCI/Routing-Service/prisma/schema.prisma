@@ -1,0 +1,110 @@
+generator client {
+    provider = "prisma-client-js"
+    output   = "../generated/prisma"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+
+
+enum ParticipantType {
+    BANK
+    PSP            // Payment Service Provider (e.g. GPay, PhonePe)
+}
+enum ParticipantStatus {
+    ACTIVE
+    INACTIVE
+    SUSPENDED
+}
+enum VpaRouteStatus {
+    ACTIVE
+    INACTIVE
+    BLOCKED
+}
+enum LookupResult {
+    FOUND
+    NOT_FOUND
+    INACTIVE
+    ERROR
+}
+
+// ─────────────────────────────────────────────
+// Participant
+// A bank or PSP registered with NPCI
+// ─────────────────────────────────────────────
+model Participant {
+    id          String            @id @default(uuid())
+    bankCode    String            @unique        // e.g. "HDFC", "ICIC"
+    name        String                           // e.g. "HDFC Bank"
+    type        ParticipantType   @default(BANK)
+    ifscPrefix  String?                          // e.g. "HDFC0"
+    status      ParticipantStatus @default(ACTIVE)
+    grpcAddress String?                          // bank's UPI service gRPC endpoint
+    callbackUrl String?                          // optional HTTP callback
+    createdAt   DateTime          @default(now())
+    updatedAt   DateTime          @updatedAt
+    handles VpaHandle[]
+    routes  VpaRoute[]
+    @@index([status])
+    @@map("participants")
+}
+
+// ─────────────────────────────────────────────
+// VpaHandle
+// Handle suffix → owning participant
+// e.g. "@okhdfc" → HDFC
+// ─────────────────────────────────────────────
+model VpaHandle {
+    id            String   @id @default(uuid())
+    handle        String   @unique               // stored without "@", e.g. "okhdfc"
+    participantId String
+    isActive      Boolean  @default(true)
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+    participant Participant @relation(fields: [participantId], references: [id], onDelete: Restrict)
+    @@index([participantId])
+    @@map("vpa_handles")
+}
+
+
+// ─────────────────────────────────────────────
+// VpaRoute
+// Full VPA → account mapping used for lookups
+// e.g. "suraj@okhdfc" → accountId in HDFC
+// ─────────────────────────────────────────────
+model VpaRoute {
+    id            String         @id @default(uuid())
+    vpa           String         @unique         // full address, e.g. "suraj@okhdfc"
+    vpaId         String         @unique         // id of the VPA in the bank's upi-service
+    accountId     String                         // account id in the bank's account-service
+    participantId String
+    bankCode      String                         // denormalised for fast lookup
+    status        VpaRouteStatus @default(ACTIVE)
+    createdAt     DateTime       @default(now())
+    updatedAt     DateTime       @updatedAt
+    participant Participant @relation(fields: [participantId], references: [id], onDelete: Restrict)
+    @@index([participantId])
+    @@index([bankCode])
+    @@index([status])
+    @@map("vpa_routes")
+}
+
+// ─────────────────────────────────────────────
+// LookupLog
+// Audit trail of every VPA resolution request
+// ─────────────────────────────────────────────
+model LookupLog {
+    id          String       @id @default(uuid())
+    vpa         String
+    result      LookupResult
+    bankCode    String?
+    requestedBy String?                          // caller service name
+    message     String?
+    createdAt   DateTime     @default(now())
+    @@index([vpa])
+    @@index([result])
+    @@index([createdAt])
+    @@map("lookup_logs")
+}
