@@ -1,0 +1,157 @@
+{
+  "info": {
+    "name": "UPI Switch (NPCI)",
+    "description": "All HTTP routes of the upi-switch service. Base URL: http://localhost:5010",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5010" },
+    { "key": "txnId", "value": "" },
+    { "key": "rrn", "value": "" },
+    { "key": "reversalId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Switch",
+      "item": [
+        {
+          "name": "Initiate Payment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "  pm.collectionVariables.set('txnId', res.data.id);",
+                  "  pm.collectionVariables.set('rrn', res.data.rrn);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"PAY\",\n  \"senderVpa\": \"suraj@okicici\",\n  \"receiverVpa\": \"rahul@okhdfc\",\n  \"amount\": \"100.00\",\n  \"currency\": \"INR\",\n  \"description\": \"Dinner split\",\n  \"remarks\": \"test payment\",\n  \"senderPsp\": \"PSP1\",\n  \"receiverPsp\": \"PSP2\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/switch/pay", "host": ["{{baseUrl}}"], "path": ["api", "v1", "switch", "pay"] }
+          }
+        },
+        {
+          "name": "Get All Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/switch/transactions", "host": ["{{baseUrl}}"], "path": ["api", "v1", "switch", "transactions"] }
+          }
+        },
+        {
+          "name": "Get Transaction By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/switch/transactions/{{txnId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "switch", "transactions", "{{txnId}}"] }
+          }
+        },
+        {
+          "name": "Get Transaction By RRN",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/switch/transactions/rrn/{{rrn}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "switch", "transactions", "rrn", "{{rrn}}"] }
+          }
+        },
+        {
+          "name": "Get Transactions By Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/switch/transactions/status/SUCCESS", "host": ["{{baseUrl}}"], "path": ["api", "v1", "switch", "transactions", "status", "SUCCESS"] },
+            "description": "Statuses: RECEIVED, ROUTING, PROCESSING, SUCCESS, FAILED, REVERSAL_PENDING, REVERSED"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reversals",
+      "item": [
+        {
+          "name": "Initiate Reversal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "  pm.collectionVariables.set('reversalId', res.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"txnId\": \"{{txnId}}\",\n  \"reason\": \"CUSTOMER_REQUEST\",\n  \"raisedBy\": \"admin\",\n  \"remarks\": \"Reversal requested by customer\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/reversals", "host": ["{{baseUrl}}"], "path": ["api", "v1", "reversals"] }
+          }
+        },
+        {
+          "name": "Get All Reversals",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/reversals", "host": ["{{baseUrl}}"], "path": ["api", "v1", "reversals"] }
+          }
+        },
+        {
+          "name": "Get Reversal By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/reversals/{{reversalId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "reversals", "{{reversalId}}"] }
+          }
+        },
+        {
+          "name": "Get Reversal By Transaction ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/reversals/txn/{{txnId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "reversals", "txn", "{{txnId}}"] }
+          }
+        },
+        {
+          "name": "Get Reversals By Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/reversals/status/SUCCESS", "host": ["{{baseUrl}}"], "path": ["api", "v1", "reversals", "status", "SUCCESS"] },
+            "description": "Statuses: INITIATED, PROCESSING, SUCCESS, FAILED"
+          }
+        }
+      ]
+    }
+  ]
+}

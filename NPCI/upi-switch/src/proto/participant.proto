@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package participant;
+
+service ParticipantService {
+    rpc LookupVpa (LookupVpaRequest) returns (LookupVpaResponse);
+}
+
+message LookupVpaRequest {
+    string vpaAddress = 1;
+}
+
+message VpaRouteData {
+    string vpaId     = 1;
+    string vpa       = 2;
+    string accountId = 3;
+    string bankCode  = 4;
+}
+
+message LookupVpaResponse {
+    bool         success = 1;
+    string       message = 2;
+    VpaRouteData data    = 3;
+}

@@ -29,11 +29,11 @@ const accountClient = new proto.account.AccountService(
 
 const call = (method, payload) =>
     new Promise((resolve, reject) => {
-        accountClient[method](<payload, (err, response>) => {
-    if (err) return reject(err);
-    resolve(response);
-});
-});
+        accountClient[method](payload, (err, response) => {
+            if (err) return reject(err);
+            resolve(response);
+        });
+    });
 
 export const getAccountById = (accountId) =>
     call("GetAccountById", { id: accountId });

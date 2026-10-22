@@ -30,11 +30,11 @@ const upiClient = new proto.upi.UpiService(
 
 const call = (method, payload) =>
     new Promise((resolve, reject) => {
-        upiClient[method](<payload, (err, response>) => {
-    if (err) return reject(err);
-    resolve(response);
-});
-});
+        upiClient[method](payload, (err, response) => {
+            if (err) return reject(err);
+            resolve(response);
+        });
+    });
 
 export const recordTransaction = (payload) => call("RecordTransaction", payload);
 export const getVpaByAddress = (vpaAddress) => call("GetVpaByAddress", { vpaAddress });
