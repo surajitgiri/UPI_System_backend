@@ -66,17 +66,50 @@ class UpiTransactionService {
             remarks,
         });
 
-        // 6. TODO: Call bank/NPCI gRPC to debit senderAccountId
-        // and credit receiverAccountId, then call markSuccess
+        // 6. Forward payment to NPCI Switch
+        try {
+            const switchServiceUrl = process.env.NPCI_SWITCH_URL || "http://localhost:5010";
+            const response = await fetch(`${switchServiceUrl}/api/v1/switch/pay`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    txnRef,
+                    type: "PAY",
+                    senderVpa,
+                    receiverVpa,
+                    amount: amount.toString(),
+                    currency: currency || "INR",
+                    description,
+                    remarks,
+                    senderPsp: sender.bankCode,
+                    receiverPsp: receiver.bankCode,
+                }),
+            });
 
-        // For now — mark success directly (replace with actual bank call)
-        const completed = await upiTransactionRepository.markSuccess(
-            transaction.id,
-            null,       // bankTxnId — from bank gRPC response
-            null        // npciTxnId — from NPCI switch response
-        );
+            const switchResult = await response.json();
 
-        return completed;
+            if (!response.ok || !switchResult.success) {
+                const errorMsg = switchResult.message || `NPCI Switch payment failed (HTTP ${response.status})`;
+                await upiTransactionRepository.markFailed(transaction.id, errorMsg);
+                throw new AppError(errorMsg, response.status >= 400 && response.status < 500 ? response.status : 502);
+            }
+
+            // 7. Mark transaction SUCCESS with NPCI references
+            const completed = await upiTransactionRepository.markSuccess(
+                transaction.id,
+                switchResult.data?.rrn || rrn,
+                switchResult.data?.npciTxnId || null
+            );
+
+            return {
+                ...completed,
+                switchTransaction: switchResult.data,
+            };
+        } catch (err) {
+            if (err instanceof AppError) throw err;
+            await upiTransactionRepository.markFailed(transaction.id, err.message);
+            throw new AppError(`Switch payment failed: ${err.message}`, 502);
+        }
 
     }
 
