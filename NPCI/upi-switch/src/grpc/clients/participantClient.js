@@ -21,7 +21,7 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
 
 const proto = grpc.loadPackageDefinition(packageDefinition);
 
-const PARTICIPANT_GRPC_ADDRESS = process.env.PARTICIPANT_GRPC_ADDRESS || "localhost:50070";
+const PARTICIPANT_GRPC_ADDRESS = process.env.PARTICIPANT_GRPC_ADDRESS || "localhost:50061";
 
 const participantClient = new proto.participant.ParticipantService(
     PARTICIPANT_GRPC_ADDRESS,

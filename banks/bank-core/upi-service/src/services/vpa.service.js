@@ -73,7 +73,7 @@ class VpaService {
         const shouldBePrimary = isPrimary || existingCount === 0;
         const shouldBeDefault = isDefault || existingCount === 0;
 
-        return await vpaRepository.create({
+        const newVpa = await vpaRepository.create({
             vpa,
             handle,
             userId,
@@ -83,6 +83,24 @@ class VpaService {
             isDefault: shouldBeDefault,
             remarks,
         });
+
+        // ── 6. Auto-sync with NPCI Routing Service (non-blocking) ─────────
+        try {
+            const routingServiceUrl = process.env.ROUTING_SERVICE_URL || "http://localhost:5020";
+            await fetch(`${routingServiceUrl}/api/v1/routes`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    vpa: newVpa.vpa,
+                    vpaId: newVpa.id,
+                    accountId: newVpa.accountId,
+                }),
+            });
+        } catch (syncErr) {
+            console.warn("⚠️ Could not auto-sync VPA with NPCI Routing Service:", syncErr.message);
+        }
+
+        return newVpa;
     }
 
     //GET ALL VPAs

@@ -21,7 +21,7 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
 
 const proto = grpc.loadPackageDefinition(packageDefinition);
 
-const UPI_GRPC_ADDRESS = process.env.UPI_GRPC_ADDRESS || "localhost:50054";
+const UPI_GRPC_ADDRESS = process.env.UPI_GRPC_ADDRESS || "localhost:50056";
 
 const upiClient = new proto.upi.UpiService(
     UPI_GRPC_ADDRESS,
