@@ -1,0 +1,349 @@
+{
+  "info": {
+    "name": "NPCI Routing Service",
+    "description": "Postman Collection for NPCI Routing & Participant Directory Service. Base URL: http://localhost:5020",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5020" },
+    { "key": "participantId", "value": "" },
+    { "key": "bankCode", "value": "HDFC" },
+    { "key": "handleId", "value": "" },
+    { "key": "handle", "value": "okhdfc" },
+    { "key": "vpa", "value": "suraj@okhdfc" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Participants",
+      "item": [
+        {
+          "name": "Create Participant",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "  pm.collectionVariables.set('participantId', res.data.id);",
+                  "  pm.collectionVariables.set('bankCode', res.data.bankCode);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bankCode\": \"HDFC\",\n  \"name\": \"HDFC Bank\",\n  \"type\": \"BANK\",\n  \"ifscPrefix\": \"HDFC0\",\n  \"grpcAddress\": \"localhost:50054\",\n  \"callbackUrl\": \"http://localhost:3000/callback\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participants",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "participants"]
+            }
+          }
+        },
+        {
+          "name": "Get All Participants",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participants",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "participants"]
+            }
+          }
+        },
+        {
+          "name": "Get Participant By Bank Code",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participants/bank/{{bankCode}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "participants", "bank", "{{bankCode}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Participants By Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participants/status/ACTIVE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "participants", "status", "ACTIVE"]
+            },
+            "description": "Statuses: ACTIVE, INACTIVE, SUSPENDED"
+          }
+        },
+        {
+          "name": "Get Participant By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participants/{{participantId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "participants", "{{participantId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Participant",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"HDFC Bank Ltd.\",\n  \"type\": \"BANK\",\n  \"ifscPrefix\": \"HDFC0\",\n  \"grpcAddress\": \"localhost:50054\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participants/{{participantId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "participants", "{{participantId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Participant Status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participants/{{participantId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "participants", "{{participantId}}", "status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Handles",
+      "item": [
+        {
+          "name": "Create Handle",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "  pm.collectionVariables.set('handleId', res.data.id);",
+                  "  pm.collectionVariables.set('handle', res.data.handle);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"handle\": \"okhdfc\",\n  \"bankCode\": \"{{bankCode}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/handles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "handles"]
+            }
+          }
+        },
+        {
+          "name": "Get All Handles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/handles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "handles"]
+            }
+          }
+        },
+        {
+          "name": "Get Handles By Bank Code",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/handles/bank/{{bankCode}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "handles", "bank", "{{bankCode}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Handle By Name",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/handles/{{handle}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "handles", "{{handle}}"]
+            }
+          }
+        },
+        {
+          "name": "Set Handle Active Status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/handles/{{handleId}}/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "handles", "{{handleId}}", "active"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "VPA Routes",
+      "item": [
+        {
+          "name": "Register Route",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vpa\": \"suraj@okhdfc\",\n  \"vpaId\": \"vpa-123-uuid\",\n  \"accountId\": \"acc-456-uuid\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/routes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "routes"]
+            }
+          }
+        },
+        {
+          "name": "Lookup VPA (HTTP)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/routes/lookup/{{vpa}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "routes", "lookup", "{{vpa}}"]
+            }
+          }
+        },
+        {
+          "name": "Get All Routes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/routes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "routes"]
+            }
+          }
+        },
+        {
+          "name": "Get Routes By Bank Code",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/routes/bank/{{bankCode}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "routes", "bank", "{{bankCode}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Routes By Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/routes/status/ACTIVE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "routes", "status", "ACTIVE"]
+            },
+            "description": "Statuses: ACTIVE, INACTIVE, BLOCKED"
+          }
+        },
+        {
+          "name": "Get Route By VPA",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/routes/{{vpa}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "routes", "{{vpa}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Route Status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/routes/{{vpa}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "routes", "{{vpa}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "Delete Route",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/routes/{{vpa}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "routes", "{{vpa}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
