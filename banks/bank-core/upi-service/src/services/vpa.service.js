@@ -84,20 +84,35 @@ class VpaService {
             remarks,
         });
 
-        // ── 6. Auto-sync with NPCI Routing Service (non-blocking) ─────────
+        // ── 6. Auto-sync with NPCI Routing Service ───────────────────────
         try {
             const routingServiceUrl = process.env.ROUTING_SERVICE_URL || "http://localhost:5020";
-            await fetch(`${routingServiceUrl}/api/v1/routes`, {
+            const syncRes = await fetch(`${routingServiceUrl}/api/v1/routes`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     vpa: newVpa.vpa,
                     vpaId: newVpa.id,
                     accountId: newVpa.accountId,
+                    bankCode: newVpa.bankCode || bankCode,
                 }),
             });
+
+            if (!syncRes.ok) {
+                const errBody = await syncRes.json().catch(() => ({}));
+                console.error("❌ Failed to sync VPA with NPCI Routing Service:", errBody);
+                throw new AppError(
+                    `Failed to register VPA with NPCI Routing Service: ${errBody.message || syncRes.statusText}`,
+                    syncRes.status >= 400 && syncRes.status < 500 ? syncRes.status : 502
+                );
+            }
         } catch (syncErr) {
-            console.warn("⚠️ Could not auto-sync VPA with NPCI Routing Service:", syncErr.message);
+            if (syncErr instanceof AppError) throw syncErr;
+            console.error("❌ Could not reach NPCI Routing Service:", syncErr.message);
+            throw new AppError(
+                `Could not reach NPCI Routing Service (${syncErr.message}). Is Routing-Service running on port 5020?`,
+                503
+            );
         }
 
         return newVpa;

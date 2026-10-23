@@ -1,12 +1,13 @@
 import AppError from "../errors/AppError.js";
 import vpaRouteRepository from "../repositories/vpaRoute.repository.js";
 import vpaHandleRepository from "../repositories/vpaHandle.repository.js";
+import participantRepository from "../repositories/participantBank.repository.js";
 import lookupLogRepository from "../repositories/lookupLog.repository.js";
 
 class VpaRouteService {
 
     // ── Register a VPA route (called when a bank creates a VPA) ────────
-    async registerRoute({ vpa, vpaId, accountId }) {
+    async registerRoute({ vpa, vpaId, accountId, bankCode }) {
         const address = vpa.trim().toLowerCase();
 
         if (!address.includes("@")) {
@@ -14,23 +15,40 @@ class VpaRouteService {
         }
 
         const handleName = address.split("@")[1];
-        const handle = await vpaHandleRepository.findByHandle(handleName);
+        let handle = await vpaHandleRepository.findByHandle(handleName);
+
+        // Auto-provision handle & participant if bankCode provided and handle doesn't exist
+        if (!handle && bankCode) {
+            const code = bankCode.toUpperCase();
+            let participant = await participantRepository.findByBankCode(code);
+            if (!participant) {
+                participant = await participantRepository.create({
+                    bankCode: code,
+                    name: `${code} Bank`,
+                    type: "BANK",
+                    status: "ACTIVE",
+                });
+            }
+            handle = await vpaHandleRepository.create({
+                handle: handleName,
+                participantId: participant.id,
+                isActive: true,
+            });
+            handle = await vpaHandleRepository.findByHandle(handleName);
+        }
+
         if (!handle) throw new AppError(`Handle '@${handleName}' is not registered`, 404);
         if (!handle.isActive) throw new AppError(`Handle '@${handleName}' is inactive`, 400);
         if (handle.participant.status !== "ACTIVE") {
             throw new AppError(`Participant '${handle.participant.bankCode}' is not ACTIVE`, 400);
         }
 
-        if (await vpaRouteRepository.exists(address)) {
-            throw new AppError(`VPA '${address}' is already registered`, 409);
-        }
-
-        return vpaRouteRepository.create({
-            vpa: address,
+        return vpaRouteRepository.upsert(address, {
             vpaId,
             accountId,
             participantId: handle.participantId,
             bankCode: handle.participant.bankCode,
+            status: "ACTIVE",
         });
     }
 

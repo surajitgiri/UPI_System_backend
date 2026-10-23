@@ -5,13 +5,13 @@ import vpaRouteService from "../services/vpaRoute.service.js";
 // POST /api/v1/routes
 export const registerRoute = async (req, res, next) => {
     try {
-        const { vpa, vpaId, accountId } = req.body;
+        const { vpa, vpaId, accountId, bankCode } = req.body;
 
         if (!vpa || !vpaId || !accountId) {
             throw new AppError("vpa, vpaId and accountId are required", 400);
         }
 
-        const route = await vpaRouteService.registerRoute({ vpa, vpaId, accountId });
+        const route = await vpaRouteService.registerRoute({ vpa, vpaId, accountId, bankCode });
         return successResponse(res, "VPA route registered successfully", route, 201);
     } catch (error) {
         next(error);
