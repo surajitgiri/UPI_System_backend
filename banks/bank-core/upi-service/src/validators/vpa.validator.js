@@ -34,8 +34,8 @@ export const setPinSchema = z.object({
     pin: z.string().regex(/^\d{4}$|^\d{6}$/, "UPI PIN must be exactly 4 or 6 digits"),
     // Required to authenticate the request before allowing PIN change
 
-    accountNumber: z.string().min(9, "Account number is required"),
-    expiryDate: z.string().regex(/^\d{2}\/\d{2}$/, "Expiry date must be in MM/YY format"),
+    // accountNumber: z.string().min(9, "Account number is required"),
+    // expiryDate: z.string().regex(/^\d{2}\/\d{2}$/, "Expiry date must be in MM/YY format"),
 });
 
 
