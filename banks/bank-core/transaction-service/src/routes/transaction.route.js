@@ -24,6 +24,17 @@ router.post(
 
 
 /*
+| POST /transactions/record
+| Records an already-settled (UPI) transaction + ledger entries.
+| Does NOT move money.
+*/
+router.post(
+    "/record",
+    transactionController.recordSettledTransaction
+);
+
+
+/*
 |--------------------------------------------------------------------------
 | Get All Transactions
 |--------------------------------------------------------------------------

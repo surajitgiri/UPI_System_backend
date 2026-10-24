@@ -181,6 +181,99 @@ class TransactionService {
         return transaction;
     }
 
+    // RECORD SETTLED TRANSACTION
+    // Used by upi-service AFTER the NPCI switch has already debited and
+    // credited the accounts. This only stores history (Transaction +
+    // double-entry Ledger rows). It NEVER moves money again.
+    async recordSettledTransaction(data) {
+        const {
+            reference,
+            sourceAccountId,
+            destinationAccountId,
+            amount,
+            currency,
+            description,
+        } = data;
+
+        if (!reference) {
+            throw new AppError("Transaction reference is required", 400);
+        }
+        if (!sourceAccountId || !destinationAccountId) {
+            throw new AppError("Source and destination account IDs are required", 400);
+        }
+        if (!isValidAmount(amount)) {
+            throw new AppError("Transaction amount must be greater than zero", 400);
+        }
+
+        // Idempotency — same UPI payment is never recorded twice
+        const existing = await transactionRepository.findByReference(reference);
+        if (existing) {
+            return existing;
+        }
+
+        // Current balances (money already moved) → derive balanceBefore
+        let sourceAfter = "0";
+        let destAfter = "0";
+        try {
+            const [src, dst] = await Promise.all([
+                getAccountByIdGrpc(sourceAccountId),
+                getAccountByIdGrpc(destinationAccountId),
+            ]);
+            sourceAfter = src?.data?.availableBalance ?? "0";
+            destAfter = dst?.data?.availableBalance ?? "0";
+        } catch (err) {
+            console.error("[gRPC] getAccountByIdGrpc failed while recording:", err.message);
+            throw new AppError(`Account service error: ${err.message}`, 503);
+        }
+
+        const amt = Number(amount);
+        const sourceBefore = (Number(sourceAfter) + amt).toFixed(2);
+        const destBefore = (Number(destAfter) - amt).toFixed(2);
+
+        const transaction = await transactionRepository.create({
+            transactionReference: reference,
+            type: TRANSACTION_TYPE.TRANSFER,
+            status: TRANSACTION_STATUS.SUCCESS,
+            sourceAccountId,
+            destinationAccountId,
+            amount,
+            currency: currency || "INR",
+            description: description || "UPI payment",
+        });
+
+        try {
+            await createLedgerEntriesGrpc([
+                {
+                    transactionId: transaction.id,
+                    accountId: sourceAccountId,
+                    entryType: "DEBIT",
+                    amount: amt.toString(),
+                    currency: transaction.currency,
+                    balanceBefore: sourceBefore,
+                    balanceAfter: sourceAfter,
+                    description: description || "UPI payment debit",
+                    reference,
+                },
+                {
+                    transactionId: transaction.id,
+                    accountId: destinationAccountId,
+                    entryType: "CREDIT",
+                    amount: amt.toString(),
+                    currency: transaction.currency,
+                    balanceBefore: destBefore,
+                    balanceAfter: destAfter,
+                    description: description || "UPI payment credit",
+                    reference,
+                },
+            ]);
+        } catch (err) {
+            console.error("[gRPC] createLedgerEntriesGrpc failed while recording:", err.message);
+            throw new AppError(`Ledger service error: ${err.message}`, 503);
+        }
+
+        return transaction;
+    }
+
     // GET TRANSACTION BY ID
     async getTransactionById(id) {
         if (!id) {

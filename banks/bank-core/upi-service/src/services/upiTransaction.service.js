@@ -101,6 +101,32 @@ class UpiTransactionService {
                 switchResult.data?.npciTxnId || null
             );
 
+            // 8. Record history in transaction-service (+ ledger entries).
+            // Money has already moved at NPCI, so failures here are logged
+            // but must not fail the payment.
+            try {
+                const txnServiceUrl = process.env.TRANSACTION_SERVICE_URL || "http://localhost:5003";
+                const recordRes = await fetch(`${txnServiceUrl}/transactions/record`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        reference: `UPI-${rrn}`,
+                        sourceAccountId: sender.accountId,
+                        destinationAccountId: receiver.accountId,
+                        amount: amount.toString(),
+                        currency: currency || "INR",
+                        description: description || `UPI payment ${senderVpa} → ${receiverVpa}`,
+                    }),
+                });
+
+                if (!recordRes.ok) {
+                    const errBody = await recordRes.json().catch(() => ({}));
+                    console.error("❌ Failed to record transaction/ledger:", errBody.message || recordRes.statusText);
+                }
+            } catch (recordErr) {
+                console.error("❌ Could not reach transaction-service:", recordErr.message);
+            }
+
             return {
                 ...completed,
                 switchTransaction: switchResult.data,

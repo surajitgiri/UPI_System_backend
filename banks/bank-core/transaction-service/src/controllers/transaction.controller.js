@@ -21,6 +21,22 @@ class TransactionController {
         }
     }
 
+    // POST /transactions/record
+    async recordSettledTransaction(req, res, next) {
+        try {
+            const transaction = await transactionService.recordSettledTransaction(req.body);
+
+            return successResponse(
+                res,
+                "Settled transaction recorded successfully",
+                transaction,
+                201
+            );
+        } catch (error) {
+            next(error);
+        }
+    }
+
     // GET /transactions
     async getAllTransactions(req, res, next) {
         try {
