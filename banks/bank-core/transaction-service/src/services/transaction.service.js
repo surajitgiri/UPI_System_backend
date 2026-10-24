@@ -232,7 +232,7 @@ class TransactionService {
 
         const transaction = await transactionRepository.create({
             transactionReference: reference,
-            type: TRANSACTION_TYPE.TRANSFER,
+            type: data.type && Object.values(TRANSACTION_TYPE).includes(data.type) ? data.type : TRANSACTION_TYPE.TRANSFER,
             status: TRANSACTION_STATUS.SUCCESS,
             sourceAccountId,
             destinationAccountId,

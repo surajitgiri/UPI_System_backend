@@ -50,4 +50,22 @@ export function validateAccount(accountId, amount = "0") {
     });
 }
 
+export function debitAccount(accountId, amount, transactionReference) {
+    return new Promise((resolve, reject) => {
+        accountClient.DebitAccount({ accountId, amount, transactionReference }, (err, response) => {
+            if (err) return reject(err);
+            resolve(response);
+        });
+    });
+}
+
+export function creditAccount(accountId, amount, transactionReference) {
+    return new Promise((resolve, reject) => {
+        accountClient.CreditAccount({ accountId, amount, transactionReference }, (err, response) => {
+            if (err) return reject(err);
+            resolve(response);
+        });
+    });
+}
+
 export default accountClient;

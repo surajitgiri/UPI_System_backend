@@ -1,6 +1,7 @@
 import upiTransactionRepository from "../repositories/upiTransaction.repository.js";
 import vpaRepository from "../repositories/vpa.repository.js";
 import vpaService from "./vpa.service.js";
+import { debitAccount, creditAccount } from "../grpc/clients/accountClient.js";
 import AppError from "../errors/AppError.js";
 import { randomUUID } from "crypto";
 
@@ -179,20 +180,23 @@ class UpiTransactionService {
             throw new AppError("Original transaction not found", 404);
         }
         if (original.status !== "SUCCESS") {
-            throw new AppError("Only successful transactions can be refunded", 400);
+            throw new AppError(`Only successful transactions can be refunded. Current status is ${original.status}`, 400);
         }
         const refundAmount = amount ?? Number(original.amount);
         if (refundAmount > Number(original.amount)) {
             throw new AppError("Refund amount cannot exceed original transaction amount", 400);
         }
+
         // Swap sender/receiver for refund
         let rrn = generateRrn();
         while (await upiTransactionRepository.rrnExists(rrn)) {
             rrn = generateRrn();
         }
+
+        const txnRef = randomUUID();
         const refund = await upiTransactionRepository.create({
             rrn,
-            txnRef: randomUUID(),
+            txnRef,
             type: "REFUND",
             status: "INITIATED",
             senderVpaId: original.receiverVpaId,    // original receiver refunds
@@ -201,11 +205,77 @@ class UpiTransactionService {
             receiverAccountId: original.senderAccountId,
             amount: refundAmount,
             currency: original.currency,
-            description: `Refund for ${original.txnRef}`,
+            description: remarks || `Refund for ${original.txnRef}`,
             remarks,
         });
-        // TODO: Call bank gRPC to reverse the funds
-        const completed = await upiTransactionRepository.markSuccess(refund.id, null, null);
+
+        const refTag = `UPI-REF-${rrn}`;
+
+        // 1. Call bank gRPC to reverse the funds
+        // Step A: Debit the original receiver (undo previous credit)
+        try {
+            const debitRes = await debitAccount(
+                original.receiverAccountId,
+                refundAmount.toString(),
+                refTag
+            );
+            if (!debitRes.success) {
+                await upiTransactionRepository.markFailed(refund.id, `Receiver debit failed: ${debitRes.message}`);
+                throw new AppError(`Refund debit failed: ${debitRes.message}`, 400);
+            }
+        } catch (err) {
+            if (err instanceof AppError) throw err;
+            await upiTransactionRepository.markFailed(refund.id, err.message);
+            throw new AppError(`Refund debit error: ${err.message}`, 502);
+        }
+
+        // Step B: Credit the original sender (undo previous debit)
+        try {
+            const creditRes = await creditAccount(
+                original.senderAccountId,
+                refundAmount.toString(),
+                refTag
+            );
+            if (!creditRes.success) {
+                // Critical — receiver debited but sender credit failed
+                await upiTransactionRepository.markFailed(refund.id, `Sender credit failed: ${creditRes.message}`);
+                throw new AppError(`Refund credit failed: ${creditRes.message}. Manual intervention required.`, 502);
+            }
+        } catch (err) {
+            if (err instanceof AppError) throw err;
+            await upiTransactionRepository.markFailed(refund.id, err.message);
+            throw new AppError(`Refund credit error: ${err.message}`, 502);
+        }
+
+        // 2. Mark refund as SUCCESS & original transaction as REVERSED
+        const completed = await upiTransactionRepository.markSuccess(refund.id, rrn, null);
+        await upiTransactionRepository.updateStatus(original.id, "REVERSED");
+
+        // 3. Record history in transaction-service (+ double-entry ledger entries)
+        try {
+            const txnServiceUrl = process.env.TRANSACTION_SERVICE_URL || "http://localhost:5003";
+            const recordRes = await fetch(`${txnServiceUrl}/transactions/record`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    reference: refTag,
+                    sourceAccountId: original.receiverAccountId,      // debited
+                    destinationAccountId: original.senderAccountId,  // credited
+                    amount: refundAmount.toString(),
+                    currency: original.currency || "INR",
+                    description: remarks || `UPI refund for ${original.txnRef}`,
+                    type: "REFUND",
+                }),
+            });
+
+            if (!recordRes.ok) {
+                const errBody = await recordRes.json().catch(() => ({}));
+                console.error("❌ Failed to record refund in transaction/ledger:", errBody.message || recordRes.statusText);
+            }
+        } catch (recordErr) {
+            console.error("❌ Could not reach transaction-service for refund:", recordErr.message);
+        }
+
         return completed;
     }
 
