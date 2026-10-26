@@ -1,0 +1,406 @@
+# ─────────────────────────────────────────────────────────────────
+# Customer Service
+# ─────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-service
+  namespace: upi-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: customer-service
+  template:
+    metadata:
+      labels:
+        app: customer-service
+    spec:
+      containers:
+        - name: customer-service
+          image: upi/customer-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5001
+            - name: grpc
+              containerPort: 50051
+          env:
+            - name: PORT
+              value: "5001"
+            - name: GRPC_PORT
+              value: "50051"
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: NODE_ENV
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: upi-secrets
+                  key: DATABASE_URL_CUSTOMER
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer-service
+  namespace: upi-system
+spec:
+  selector:
+    app: customer-service
+  ports:
+    - name: http
+      port: 5001
+      targetPort: 5001
+    - name: grpc
+      port: 50051
+      targetPort: 50051
+
+---
+# ─────────────────────────────────────────────────────────────────
+# Account Service
+# ─────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: account-service
+  namespace: upi-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: account-service
+  template:
+    metadata:
+      labels:
+        app: account-service
+    spec:
+      containers:
+        - name: account-service
+          image: upi/account-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5002
+            - name: grpc
+              containerPort: 50052
+          env:
+            - name: PORT
+              value: "5002"
+            - name: GRPC_PORT
+              value: "50052"
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: NODE_ENV
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: upi-secrets
+                  key: DATABASE_URL_ACCOUNT
+            - name: CUSTOMER_GRPC_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: CUSTOMER_GRPC_ADDRESS
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: account-service
+  namespace: upi-system
+spec:
+  selector:
+    app: account-service
+  ports:
+    - name: http
+      port: 5002
+      targetPort: 5002
+    - name: grpc
+      port: 50052
+      targetPort: 50052
+
+---
+# ─────────────────────────────────────────────────────────────────
+# Transaction Service
+# ─────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transaction-service
+  namespace: upi-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: transaction-service
+  template:
+    metadata:
+      labels:
+        app: transaction-service
+    spec:
+      containers:
+        - name: transaction-service
+          image: upi/transaction-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5003
+            - name: grpc
+              containerPort: 50053
+          env:
+            - name: PORT
+              value: "5003"
+            - name: GRPC_PORT
+              value: "50053"
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: NODE_ENV
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: upi-secrets
+                  key: DATABASE_URL_TRANSACTION
+            - name: ACCOUNT_GRPC_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: ACCOUNT_GRPC_ADDRESS
+            - name: LEDGER_GRPC_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: LEDGER_GRPC_ADDRESS
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: transaction-service
+  namespace: upi-system
+spec:
+  selector:
+    app: transaction-service
+  ports:
+    - name: http
+      port: 5003
+      targetPort: 5003
+    - name: grpc
+      port: 50053
+      targetPort: 50053
+
+---
+# ─────────────────────────────────────────────────────────────────
+# Ledger Service
+# ─────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ledger-service
+  namespace: upi-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ledger-service
+  template:
+    metadata:
+      labels:
+        app: ledger-service
+    spec:
+      containers:
+        - name: ledger-service
+          image: upi/ledger-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5004
+            - name: grpc
+              containerPort: 50054
+          env:
+            - name: PORT
+              value: "5004"
+            - name: GRPC_PORT
+              value: "50054"
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: NODE_ENV
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: upi-secrets
+                  key: DATABASE_URL_LEDGER
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ledger-service
+  namespace: upi-system
+spec:
+  selector:
+    app: ledger-service
+  ports:
+    - name: http
+      port: 5004
+      targetPort: 5004
+    - name: grpc
+      port: 50054
+      targetPort: 50054
+
+---
+# ─────────────────────────────────────────────────────────────────
+# UPI Service
+# ─────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: upi-service
+  namespace: upi-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: upi-service
+  template:
+    metadata:
+      labels:
+        app: upi-service
+    spec:
+      containers:
+        - name: upi-service
+          image: upi/upi-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5006
+            - name: grpc
+              containerPort: 50056
+          env:
+            - name: PORT
+              value: "5006"
+            - name: GRPC_PORT
+              value: "50056"
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: NODE_ENV
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: upi-secrets
+                  key: JWT_SECRET
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: upi-secrets
+                  key: DATABASE_URL_UPI
+            - name: ACCOUNT_GRPC_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: ACCOUNT_GRPC_ADDRESS
+            - name: CUSTOMER_GRPC_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: CUSTOMER_GRPC_ADDRESS
+            - name: ROUTING_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: ROUTING_SERVICE_URL
+            - name: NPCI_SWITCH_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: NPCI_SWITCH_URL
+            - name: TRANSACTION_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: TRANSACTION_SERVICE_URL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: upi-service
+  namespace: upi-system
+spec:
+  selector:
+    app: upi-service
+  ports:
+    - name: http
+      port: 5006
+      targetPort: 5006
+    - name: grpc
+      port: 50056
+      targetPort: 50056
+
+---
+# ─────────────────────────────────────────────────────────────────
+# Bank API Gateway
+# ─────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bank-api
+  namespace: upi-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bank-api
+  template:
+    metadata:
+      labels:
+        app: bank-api
+    spec:
+      containers:
+        - name: bank-api
+          image: upi/bank-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5005
+          env:
+            - name: PORT
+              value: "5005"
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: NODE_ENV
+            - name: CUSTOMER_GRPC_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: CUSTOMER_GRPC_ADDRESS
+            - name: ACCOUNT_GRPC_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: ACCOUNT_GRPC_ADDRESS
+            - name: TRANSACTION_GRPC_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: TRANSACTION_GRPC_ADDRESS
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bank-api
+  namespace: upi-system
+spec:
+  selector:
+    app: bank-api
+  ports:
+    - name: http
+      port: 5005
+      targetPort: 5005

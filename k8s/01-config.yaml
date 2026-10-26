@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: upi-config
+  namespace: upi-system
+data:
+  NODE_ENV: "production"
+  # Service HTTP URLs (internal K8s DNS)
+  ROUTING_SERVICE_URL: "http://routing-service:5020"
+  NPCI_SWITCH_URL: "http://upi-switch:5010"
+  TRANSACTION_SERVICE_URL: "http://transaction-service:5003"
+  
+  # Upstream gRPC Addresses (internal K8s DNS)
+  ACCOUNT_GRPC_ADDRESS: "account-service:50052"
+  CUSTOMER_GRPC_ADDRESS: "customer-service:50051"
+  LEDGER_GRPC_ADDRESS: "ledger-service:50054"
+  TRANSACTION_GRPC_ADDRESS: "transaction-service:50053"
+  UPI_GRPC_ADDRESS: "upi-service:50056"
+  PARTICIPANT_GRPC_ADDRESS: "routing-service:50061"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: upi-secrets
+  namespace: upi-system
+type: Opaque
+stringData:
+  JWT_SECRET: "upi-production-secure-jwt-secret-key-32bytes"
+  # Default Database URLs (Prisma accelerate / pooled postgres or your local/cloud postgres)
+  DATABASE_URL_ROUTING: "postgres://be92830e9285faf0419d49890ffa63beb9bc2398cfb4dee595929a8b92a9f89a:sk_STEfdf4gcnguVu3g4uEaE@pooled.db.prisma.io:5432/postgres?sslmode=require"
+  DATABASE_URL_SWITCH: "postgres://d0fc135abaecb341c445244cf2aa8fc14e30eb6e3c7dac818accc84bf5d805e3:sk_QwmXALofv0oKhJC_1wbxh@pooled.db.prisma.io:5432/postgres?sslmode=require"
+  DATABASE_URL_UPI: "postgres://829f56d07a8fde8aae38dc93264599f50f43a01a989699d681bb6901e810d559:sk_29M_LuLRsy8QrnmaHPbMq@pooled.db.prisma.io:5432/postgres?sslmode=require"
+  DATABASE_URL_CUSTOMER: "postgres://d0fc135abaecb341c445244cf2aa8fc14e30eb6e3c7dac818accc84bf5d805e3:sk_QwmXALofv0oKhJC_1wbxh@pooled.db.prisma.io:5432/postgres?sslmode=require"
+  DATABASE_URL_ACCOUNT: "postgres://d0fc135abaecb341c445244cf2aa8fc14e30eb6e3c7dac818accc84bf5d805e3:sk_QwmXALofv0oKhJC_1wbxh@pooled.db.prisma.io:5432/postgres?sslmode=require"
+  DATABASE_URL_TRANSACTION: "postgres://d0fc135abaecb341c445244cf2aa8fc14e30eb6e3c7dac818accc84bf5d805e3:sk_QwmXALofv0oKhJC_1wbxh@pooled.db.prisma.io:5432/postgres?sslmode=require"
+  DATABASE_URL_LEDGER: "postgres://d0fc135abaecb341c445244cf2aa8fc14e30eb6e3c7dac818accc84bf5d805e3:sk_QwmXALofv0oKhJC_1wbxh@pooled.db.prisma.io:5432/postgres?sslmode=require"

@@ -1,0 +1,151 @@
+# ─────────────────────────────────────────────────────────────────
+# NPCI Routing Service
+# ─────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: routing-service
+  namespace: upi-system
+  labels:
+    app: routing-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: routing-service
+  template:
+    metadata:
+      labels:
+        app: routing-service
+    spec:
+      containers:
+        - name: routing-service
+          image: upi/routing-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5020
+            - name: grpc
+              containerPort: 50061
+          env:
+            - name: PORT
+              value: "5020"
+            - name: GRPC_PORT
+              value: "50061"
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: NODE_ENV
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: upi-secrets
+                  key: DATABASE_URL_ROUTING
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: routing-service
+  namespace: upi-system
+spec:
+  selector:
+    app: routing-service
+  ports:
+    - name: http
+      port: 5020
+      targetPort: 5020
+    - name: grpc
+      port: 50061
+      targetPort: 50061
+
+---
+# ─────────────────────────────────────────────────────────────────
+# NPCI UPI Switch
+# ─────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: upi-switch
+  namespace: upi-system
+  labels:
+    app: upi-switch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: upi-switch
+  template:
+    metadata:
+      labels:
+        app: upi-switch
+    spec:
+      containers:
+        - name: upi-switch
+          image: upi/upi-switch:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5010
+            - name: grpc
+              containerPort: 50060
+          env:
+            - name: PORT
+              value: "5010"
+            - name: GRPC_PORT
+              value: "50060"
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: NODE_ENV
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: upi-secrets
+                  key: DATABASE_URL_SWITCH
+            - name: ACCOUNT_GRPC_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: ACCOUNT_GRPC_ADDRESS
+            - name: UPI_GRPC_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: UPI_GRPC_ADDRESS
+            - name: PARTICIPANT_GRPC_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: upi-config
+                  key: PARTICIPANT_GRPC_ADDRESS
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: upi-switch
+  namespace: upi-system
+spec:
+  selector:
+    app: upi-switch
+  ports:
+    - name: http
+      port: 5010
+      targetPort: 5010
+    - name: grpc
+      port: 50060
+      targetPort: 50060
