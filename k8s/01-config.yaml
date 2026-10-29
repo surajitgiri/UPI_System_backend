@@ -25,12 +25,11 @@ metadata:
   namespace: upi-system
 type: Opaque
 stringData:
-  JWT_SECRET: "upi-production-secure-jwt-secret-key-32bytes"
-  # Default Database URLs (Prisma accelerate / pooled postgres or your local/cloud postgres)
-  DATABASE_URL_ROUTING: "postgres://be92830e9285faf0419d49890ffa63beb9bc2398cfb4dee595929a8b92a9f89a:sk_STEfdf4gcnguVu3g4uEaE@pooled.db.prisma.io:5432/postgres?sslmode=require"
-  DATABASE_URL_SWITCH: "postgres://d0fc135abaecb341c445244cf2aa8fc14e30eb6e3c7dac818accc84bf5d805e3:sk_QwmXALofv0oKhJC_1wbxh@pooled.db.prisma.io:5432/postgres?sslmode=require"
-  DATABASE_URL_CUSTOMER: "prisma+postgres://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqd3RfaWQiOjEsInNlY3VyZV9rZXkiOiJza191MXRLV0dMSHFmb3o3V3dicnlhd1kiLCJhcGlfa2V5IjoiMDFLWUZCOUEyQzg4M0NRRjhOMTJQNVNFVEoiLCJ0ZW5hbnRfaWQiOiJhMDY0YmVkMmJmMzMwMTllZjdlZjY1NWM5MmI5ODI5ZjcyM2RjZmMyNmJmNjliZWJmMGVhZDdlMTJhNmVkNzIwIiwiaW50ZXJuYWxfc2VjcmV0IjoiM2U1OTNhMDUtNmUyNS00ODdlLTg0ZDgtMWEzMTcyZjE4NWM1In0.4awzXhIS7vr9pXZCy50xJ2Au6TbuKWlBNLd7E3EdT3I"
-  DATABASE_URL_ACCOUNT: "postgres://222db60d38736a54830750e560e7a56403baded069b315818c1d8d9e1e8d5367:sk_-4MmVJclS_fDV8vEZ_dpi@pooled.db.prisma.io:5432/postgres?sslmode=require"
-  DATABASE_URL_TRANSACTION: "postgres://48ee4469241e2220e7d78e76df8f225d0e22face045146db0728be38e64c43cb:sk_Ztzboy86jynlXNrs1iibE@pooled.db.prisma.io:5432/postgres?sslmode=require"
-  DATABASE_URL_LEDGER: "postgres://8b99cc084beec630bb165d323d1ee0866e94c744d559d6a7ea3998b848919c47:sk_HX2KBX8Puv4P94Aw8dcG6@pooled.db.prisma.io:5432/postgres?sslmode=require"
-  DATABASE_URL_UPI: "postgres://829f56d07a8fde8aae38dc93264599f50f43a01a989699d681bb6901e810d559:sk_29M_LuLRsy8QrnmaHPbMq@pooled.db.prisma.io:5432/postgres?sslmode=require"
+  JWT_SECRET: 
+  DATABASE_URL_ROUTING:
+  DATABASE_URL_SWITCH: 
+  DATABASE_URL_CUSTOMER: 
+  DATABASE_URL_ACCOUNT: 
+  DATABASE_URL_TRANSACTION:
+  DATABASE_URL_LEDGER: 
+  DATABASE_URL_UPI: 
